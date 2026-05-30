@@ -6,6 +6,5 @@ public record UpdateRoomRequest(
         String name,
         String buildingName,
         @Min(1) Integer capacity,
-        String description,
-        Boolean available
+        String description
 ) {}

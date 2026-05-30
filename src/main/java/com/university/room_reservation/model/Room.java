@@ -24,9 +24,6 @@ public class Room {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
-    private boolean available = true;
-
     public Room() {}
 
     public Room(String name, int capacity, RoomType roomType, String buildingName) {
@@ -48,6 +45,4 @@ public class Room {
     public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    public boolean isAvailable() { return available; }
-    public void setAvailable(boolean available) { this.available = available; }
 }

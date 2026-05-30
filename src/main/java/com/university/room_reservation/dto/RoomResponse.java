@@ -8,8 +8,7 @@ public record RoomResponse(
         String buildingName,
         int capacity,
         String roomType,
-        String description,
-        boolean available
+        String description
 ) {
     public static RoomResponse from(Room room) {
         return new RoomResponse(
@@ -18,8 +17,7 @@ public record RoomResponse(
                 room.getBuildingName(),
                 room.getCapacity(),
                 room.getRoomType().name(),
-                room.getDescription(),
-                room.isAvailable()
+                room.getDescription()
         );
     }
 }

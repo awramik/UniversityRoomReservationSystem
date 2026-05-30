@@ -93,7 +93,6 @@ public class RoomController {
         if (request.buildingName() != null) room.setBuildingName(request.buildingName());
         if (request.capacity() != null) room.setCapacity(request.capacity());
         if (request.description() != null) room.setDescription(request.description());
-        if (request.available() != null) room.setAvailable(request.available());
         return RoomResponse.from(roomRepository.save(room));
     }
 
