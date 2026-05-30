@@ -21,6 +21,9 @@ public class Room {
     @Column(nullable = false, length = 100)
     private String buildingName;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     public Room() {}
 
     public Room(String name, int capacity, RoomType roomType, String buildingName) {
@@ -40,4 +43,6 @@ public class Room {
     public void setRoomType(RoomType roomType) { this.roomType = roomType; }
     public String getBuildingName() { return buildingName; }
     public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }
