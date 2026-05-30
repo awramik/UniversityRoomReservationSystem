@@ -3,6 +3,8 @@ package com.university.room_reservation.controller;
 import com.university.room_reservation.dto.LoginRequest;
 import com.university.room_reservation.dto.LoginResponse;
 import com.university.room_reservation.security.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Auth")
 public class AuthController {
 
     private final AuthenticationManager authManager;
@@ -26,6 +29,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Authenticate and receive a JWT token")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         Authentication auth = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())
