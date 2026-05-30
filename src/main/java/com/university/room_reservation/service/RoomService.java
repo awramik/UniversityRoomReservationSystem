@@ -19,7 +19,9 @@ public class RoomService {
     }
 
     public Room addRoom(RoomRequest request) {
-        return roomRepository.save(new Room(request.name(), request.capacity(), request.roomType(), request.buildingName()));
+        Room room = new Room(request.name(), request.capacity(), request.roomType(), request.buildingName());
+        room.setDescription(request.description());
+        return roomRepository.save(room);
     }
 
     public void removeRoom(Long id) {
