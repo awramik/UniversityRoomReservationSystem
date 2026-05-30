@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/rooms")
@@ -32,6 +33,17 @@ public class RoomController {
 
     public RoomController(RoomRepository roomRepository) {
         this.roomRepository = roomRepository;
+    }
+
+    @GetMapping
+    @Operation(summary = "List all rooms",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Room list returned"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public List<RoomResponse> listRooms() {
+        return roomRepository.findAll().stream().map(RoomResponse::from).toList();
     }
 
     @PostMapping
