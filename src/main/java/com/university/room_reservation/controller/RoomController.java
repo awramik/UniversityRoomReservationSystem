@@ -3,6 +3,7 @@ package com.university.room_reservation.controller;
 import com.university.room_reservation.dto.ErrorResponse;
 import com.university.room_reservation.dto.RoomRequest;
 import com.university.room_reservation.dto.RoomResponse;
+import com.university.room_reservation.dto.UpdateRoomRequest;
 import com.university.room_reservation.exception.RoomNotFoundException;
 import com.university.room_reservation.model.Room;
 import com.university.room_reservation.repository.RoomRepository;
@@ -69,6 +70,31 @@ public class RoomController {
             throw new RoomNotFoundException(id);
         }
         roomRepository.deleteById(id);
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update a room's mutable fields (admin only)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Room updated"),
+                    @ApiResponse(responseCode = "400", description = "Validation failed",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Admin role required",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Room not found",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public RoomResponse updateRoom(@PathVariable Long id, @Valid @RequestBody UpdateRoomRequest request) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RoomNotFoundException(id));
+        if (request.name() != null) room.setName(request.name());
+        if (request.buildingName() != null) room.setBuildingName(request.buildingName());
+        if (request.capacity() != null) room.setCapacity(request.capacity());
+        if (request.description() != null) room.setDescription(request.description());
+        if (request.available() != null) room.setAvailable(request.available());
+        return RoomResponse.from(roomRepository.save(room));
     }
 
     @GetMapping("/{id}/availability")
