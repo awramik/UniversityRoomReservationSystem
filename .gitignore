@@ -36,3 +36,6 @@ build/
 AGENTS.md
 docs/
 .scratch/
+
+### Local secrets ###
+.env
