@@ -63,12 +63,7 @@ docker run --name room-reservation-db \
 
 ### 2. Configure environment variables
 
-Copy `.env.example` to `.env` in the project root and fill in the values:
-
-```bash
-cp .env.example .env
-```
-
+Create a `.env` file in the project root.
 Minimum required values for local development:
 
 ```properties
@@ -81,12 +76,9 @@ JWT_SECRET=your-secret-key-at-least-32-characters-long
 Generate a secure secret with:
 
 ```bash
-# Linux/macOS
 openssl rand -hex 32
-
-# Windows (PowerShell)
-[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
 ```
+On Windows you can do it in a WSL terminal.
 
 ### 3. Run the backend
 
