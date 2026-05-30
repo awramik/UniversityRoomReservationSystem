@@ -14,6 +14,9 @@ public class Room {
     @Enumerated(EnumType.STRING)
     private RoomType roomType;
 
+    @Column(nullable = false)
+    private boolean available = true;
+
     public Room() {}
 
     public Room(String name, int capacity, RoomType roomType) {
@@ -30,4 +33,6 @@ public class Room {
     public void setCapacity(int capacity) { this.capacity = capacity; }
     public RoomType getRoomType() { return roomType; }
     public void setRoomType(RoomType roomType) { this.roomType = roomType; }
+    public boolean isAvailable() { return available; }
+    public void setAvailable(boolean available) { this.available = available; }
 }
