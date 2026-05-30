@@ -44,7 +44,7 @@ The project is developed by a 3-person team with a clear division of roles:
 
 ---
 
-## 🚀 Getting Started (Frontend Developers)
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -76,6 +76,16 @@ DB_URL=jdbc:mysql://localhost:3306/room_reservation
 DB_USERNAME=root
 DB_PASSWORD=root
 JWT_SECRET=your-secret-key-at-least-32-characters-long
+```
+
+Generate a secure secret with:
+
+```bash
+# Linux/macOS
+openssl rand -hex 32
+
+# Windows (PowerShell)
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
 ```
 
 ### 3. Run the backend
