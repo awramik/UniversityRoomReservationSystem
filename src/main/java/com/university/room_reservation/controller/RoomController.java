@@ -9,9 +9,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/rooms")
@@ -30,7 +34,7 @@ public class RoomController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Add a new room (admin only)")
     public RoomResponse addRoom(@Valid @RequestBody RoomRequest request) {
-        Room room = new Room(request.name(), request.capacity(), request.roomType());
+        Room room = new Room(request.name(), request.capacity(), request.roomType(), request.buildingName());
         return RoomResponse.from(roomRepository.save(room));
     }
 
@@ -43,5 +47,17 @@ public class RoomController {
             throw new RoomNotFoundException(id);
         }
         roomRepository.deleteById(id);
+    }
+
+    @GetMapping("/{id}/availability")
+    @Operation(summary = "Check if a room is available for given dates")
+    public void checkAvailability(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        if (!roomRepository.existsById(id)) {
+            throw new RoomNotFoundException(id);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Availability check not yet implemented");
     }
 }

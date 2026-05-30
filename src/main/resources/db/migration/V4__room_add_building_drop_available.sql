@@ -1,0 +1,2 @@
+ALTER TABLE room DROP COLUMN available;
+ALTER TABLE room ADD COLUMN building_name VARCHAR(100) NOT NULL;

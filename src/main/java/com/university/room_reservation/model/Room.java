@@ -18,15 +18,16 @@ public class Room {
     @Column(nullable = false, length = 50)
     private RoomType roomType;
 
-    @Column(nullable = false)
-    private boolean available = true;
+    @Column(nullable = false, length = 100)
+    private String buildingName;
 
     public Room() {}
 
-    public Room(String name, int capacity, RoomType roomType) {
+    public Room(String name, int capacity, RoomType roomType, String buildingName) {
         this.name = name;
         this.capacity = capacity;
         this.roomType = roomType;
+        this.buildingName = buildingName;
     }
 
     public Long getId() { return id; }
@@ -37,6 +38,6 @@ public class Room {
     public void setCapacity(int capacity) { this.capacity = capacity; }
     public RoomType getRoomType() { return roomType; }
     public void setRoomType(RoomType roomType) { this.roomType = roomType; }
-    public boolean isAvailable() { return available; }
-    public void setAvailable(boolean available) { this.available = available; }
+    public String getBuildingName() { return buildingName; }
+    public void setBuildingName(String buildingName) { this.buildingName = buildingName; }
 }
