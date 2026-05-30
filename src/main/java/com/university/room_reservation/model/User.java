@@ -20,13 +20,16 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
-    public User() {}
+    @Column(length = 100)
+    private String name;
 
-    public User(String username, String password, Role role) {
-        this.username = username;
-        this.password = password;
-        this.role = role;
-    }
+    @Column(length = 100)
+    private String surname;
+
+    @Column(nullable = false, unique = true, length = 255)
+    private String email;
+
+    public User() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -36,4 +39,10 @@ public class User {
     public void setPassword(String password) { this.password = password; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getSurname() { return surname; }
+    public void setSurname(String surname) { this.surname = surname; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 }

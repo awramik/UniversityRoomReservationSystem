@@ -41,3 +41,74 @@ The project is developed by a 3-person team with a clear division of roles:
 
 ---
 *Project developed for the Advanced Programming Techniques course.*
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop) installed and running
+- Java 21+ (only needed if you want to run the backend locally without Docker)
+
+### 1. Start the database
+
+```bash
+docker run --name room-reservation-db \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=room_reservation \
+  -p 3306:3306 \
+  -d mysql:8
+```
+
+### 2. Configure environment variables
+
+Create a `.env` file in the project root.
+Minimum required values for local development:
+
+```properties
+DB_URL=jdbc:mysql://localhost:3306/room_reservation
+DB_USERNAME=root
+DB_PASSWORD=root
+JWT_SECRET=your-secret-key-at-least-32-characters-long
+```
+
+Generate a secure secret with:
+
+```bash
+openssl rand -hex 32
+```
+On Windows you can do it in a WSL terminal.
+
+### 3. Run the backend
+
+```bash
+./mvnw spring-boot:run
+```
+
+The app starts on **http://localhost:8080**.  
+Flyway runs automatically on startup and creates all tables and seed data — no manual SQL needed.
+
+### 4. Explore the API with Swagger UI
+
+Open **http://localhost:8080/swagger-ui/index.html** in your browser.
+
+#### Authenticating in Swagger
+
+1. Call `POST /auth/login` with one of the pre-existing accounts (see below).
+2. Copy the `token` value from the response.
+3. Click the **Authorize 🔒** button (top right).
+4. Paste the token and click **Authorize**.
+
+All locked endpoints will now include your Bearer token automatically.
+
+### Pre-existing accounts
+
+| Username  | Password  | Role    |
+|-----------|-----------|---------|
+| `admin`   | `admin`   | ADMIN   |
+| `student` | `student` | STUDENT |
+| `teacher` | `teacher` | TEACHER |
+
+> **ADMIN** can access all endpoints including user management.  
+> **STUDENT** and **TEACHER** have access to their own profile and reservation-related endpoints.
