@@ -37,5 +37,9 @@ AGENTS.md
 docs/
 .scratch/
 
+### Project artifacts ###
+CONTEXT.md
+*.pdf
+
 ### Local secrets ###
 .env

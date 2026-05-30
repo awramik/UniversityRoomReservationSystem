@@ -4,9 +4,7 @@ import com.university.room_reservation.dto.ErrorResponse;
 import com.university.room_reservation.dto.RoomRequest;
 import com.university.room_reservation.dto.RoomResponse;
 import com.university.room_reservation.dto.UpdateRoomRequest;
-import com.university.room_reservation.exception.RoomNotFoundException;
-import com.university.room_reservation.model.Room;
-import com.university.room_reservation.repository.RoomRepository;
+import com.university.room_reservation.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/rooms")
@@ -28,10 +27,34 @@ import java.time.LocalDate;
 @SecurityRequirement(name = "bearerAuth")
 public class RoomController {
 
-    private final RoomRepository roomRepository;
+    private final RoomService roomService;
 
-    public RoomController(RoomRepository roomRepository) {
-        this.roomRepository = roomRepository;
+    public RoomController(RoomService roomService) {
+        this.roomService = roomService;
+    }
+
+    @GetMapping
+    @Operation(summary = "List all rooms",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Room list returned"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public List<RoomResponse> listRooms() {
+        return roomService.listRooms().stream().map(RoomResponse::from).toList();
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get a room by ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Room found"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Room not found",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public RoomResponse getRoom(@PathVariable Long id) {
+        return RoomResponse.from(roomService.getRoom(id));
     }
 
     @PostMapping
@@ -48,28 +71,7 @@ public class RoomController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public RoomResponse addRoom(@Valid @RequestBody RoomRequest request) {
-        Room room = new Room(request.name(), request.capacity(), request.roomType(), request.buildingName());
-        return RoomResponse.from(roomRepository.save(room));
-    }
-
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Remove a room by ID (admin only)",
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "Room deleted"),
-                    @ApiResponse(responseCode = "401", description = "Not authenticated",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "403", description = "Admin role required",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "404", description = "Room not found",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-            })
-    public void removeRoom(@PathVariable Long id) {
-        if (!roomRepository.existsById(id)) {
-            throw new RoomNotFoundException(id);
-        }
-        roomRepository.deleteById(id);
+        return RoomResponse.from(roomService.addRoom(request));
     }
 
     @PatchMapping("/{id}")
@@ -87,13 +89,24 @@ public class RoomController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public RoomResponse updateRoom(@PathVariable Long id, @Valid @RequestBody UpdateRoomRequest request) {
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new RoomNotFoundException(id));
-        if (request.name() != null) room.setName(request.name());
-        if (request.buildingName() != null) room.setBuildingName(request.buildingName());
-        if (request.capacity() != null) room.setCapacity(request.capacity());
-        if (request.description() != null) room.setDescription(request.description());
-        return RoomResponse.from(roomRepository.save(room));
+        return RoomResponse.from(roomService.updateRoom(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove a room by ID (admin only)",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Room deleted"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Admin role required",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Room not found",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public void removeRoom(@PathVariable Long id) {
+        roomService.removeRoom(id);
     }
 
     @GetMapping("/{id}/availability")
@@ -111,9 +124,7 @@ public class RoomController {
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        if (!roomRepository.existsById(id)) {
-            throw new RoomNotFoundException(id);
-        }
+        roomService.getRoom(id);
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Availability check not yet implemented");
     }
 }

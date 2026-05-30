@@ -9,5 +9,6 @@ public record RoomRequest(
         @NotBlank String name,
         @NotBlank String buildingName,
         @NotNull @Min(1) Integer capacity,
-        @NotNull RoomType roomType
+        @NotNull RoomType roomType,
+        String description
 ) {}

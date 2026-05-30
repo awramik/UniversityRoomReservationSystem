@@ -2,20 +2,16 @@ package com.university.room_reservation.controller;
 
 import com.university.room_reservation.dto.ErrorResponse;
 import com.university.room_reservation.dto.UserProfileResponse;
-import com.university.room_reservation.repository.UserRepository;
+import com.university.room_reservation.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,10 +21,10 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public UserController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping("/me")
@@ -38,11 +34,8 @@ public class UserController {
                     @ApiResponse(responseCode = "401", description = "Not authenticated",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public ResponseEntity<UserProfileResponse> me(@AuthenticationPrincipal String username) {
-        return userRepository.findByUsername(username)
-                .map(UserProfileResponse::from)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public UserProfileResponse me(@AuthenticationPrincipal String username) {
+        return UserProfileResponse.from(userService.getByUsername(username));
     }
 
     @GetMapping
@@ -56,9 +49,7 @@ public class UserController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public List<UserProfileResponse> listUsers() {
-        return userRepository.findAll().stream()
-                .map(UserProfileResponse::from)
-                .toList();
+        return userService.listUsers().stream().map(UserProfileResponse::from).toList();
     }
 
     @GetMapping("/{id}")
@@ -73,10 +64,8 @@ public class UserController {
                     @ApiResponse(responseCode = "404", description = "User not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public ResponseEntity<UserProfileResponse> getUser(@PathVariable Long id) {
-        return userRepository.findById(id)
-                .map(UserProfileResponse::from)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public UserProfileResponse getUser(@PathVariable Long id) {
+        return UserProfileResponse.from(userService.getById(id));
     }
 }
+
