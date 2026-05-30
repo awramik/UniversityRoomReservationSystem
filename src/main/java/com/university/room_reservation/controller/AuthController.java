@@ -4,6 +4,9 @@ import com.university.room_reservation.dto.LoginRequest;
 import com.university.room_reservation.dto.LoginResponse;
 import com.university.room_reservation.security.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,7 +32,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Authenticate and receive a JWT token")
+    @Operation(summary = "Authenticate and receive a JWT token",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Login successful"),
+                    @ApiResponse(responseCode = "401", description = "Invalid credentials",
+                            content = @Content(schema = @Schema(implementation = com.university.room_reservation.dto.ErrorResponse.class)))
+            })
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         Authentication auth = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())
