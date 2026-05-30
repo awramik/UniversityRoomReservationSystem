@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,8 +25,8 @@ public class UserController {
 
     @GetMapping("/me")
     @Operation(summary = "Get the current user's profile")
-    public ResponseEntity<UserProfileResponse> me(@AuthenticationPrincipal UserDetails principal) {
-        return userRepository.findByUsername(principal.getUsername())
+    public ResponseEntity<UserProfileResponse> me(@AuthenticationPrincipal String username) {
+        return userRepository.findByUsername(username)
                 .map(UserProfileResponse::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
