@@ -104,11 +104,14 @@ All locked endpoints will now include your Bearer token automatically.
 
 ### Pre-existing accounts
 
-| Username  | Password  | Role    |
-|-----------|-----------|---------|
-| `admin`   | `admin`   | ADMIN   |
-| `student` | `student` | STUDENT |
-| `teacher` | `teacher` | LECTURER |
+| Username    | Password  | Role     | Name           |
+|-------------|-----------|----------|----------------|
+| `admin`     | `admin`   | ADMIN    | —              |
+| `jsmith`    | `teacher` | LECTURER | John Smith     |
+| `awilson`   | `teacher` | LECTURER | Alice Wilson   |
+| `bkowalski` | `student` | STUDENT  | Bartosz Kowalski |
+| `mnovak`    | `student` | STUDENT  | Martin Novak   |
+| `student`   | `student` | STUDENT  | —              |
 
 > **ADMIN** can access all endpoints including user management.  
 > **STUDENT** and **LECTURER** have access to their own profile and reservation-related endpoints.
