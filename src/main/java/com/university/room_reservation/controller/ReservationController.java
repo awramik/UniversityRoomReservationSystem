@@ -9,7 +9,6 @@ import com.university.room_reservation.dto.ReservationResponse;
 import com.university.room_reservation.model.Role;
 import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.service.ReservationService;
-import com.university.room_reservation.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -34,11 +33,9 @@ import java.util.UUID;
 public class ReservationController {
 
     private final ReservationService reservationService;
-    private final UserService userService;
 
-    public ReservationController(ReservationService reservationService, UserService userService) {
+    public ReservationController(ReservationService reservationService) {
         this.reservationService = reservationService;
-        this.userService = userService;
     }
 
     @GetMapping
@@ -57,8 +54,7 @@ public class ReservationController {
             @RequestParam(required = false) UUID roomId,
             @RequestParam(required = false) ReservationStatus status,
             @RequestParam(required = false) String username) {
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin = isAdmin(authentication);
         if (!isAdmin && username != null) {
             throw new org.springframework.security.access.AccessDeniedException("username filter requires admin role");
         }
@@ -90,14 +86,7 @@ public class ReservationController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public ReservationDetailResponse getReservation(@PathVariable UUID id, Authentication authentication) {
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        var reservation = reservationService.getReservation(id);
-        if (isAdmin) {
-            var booker = userService.getByUsername(reservation.getBookerName());
-            return ReservationDetailResponse.from(reservation, booker);
-        }
-        return ReservationDetailResponse.fromPublic(reservation);
+        return reservationService.getReservationDetail(id, isAdmin(authentication));
     }
 
     @PostMapping
@@ -119,11 +108,7 @@ public class ReservationController {
     public ReservationResponse createReservation(
             @Valid @RequestBody ReservationRequest request,
             Authentication authentication) {
-        Role role = authentication.getAuthorities().stream()
-                .map(a -> a.getAuthority().replace("ROLE_", ""))
-                .map(Role::valueOf)
-                .findFirst()
-                .orElse(Role.STUDENT);
+        Role role = roleFrom(authentication);
         return ReservationResponse.from(
                 reservationService.createReservation(
                         request.roomId(),
@@ -178,9 +163,7 @@ public class ReservationController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public void cancelReservation(@PathVariable UUID id, Authentication authentication) {
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        reservationService.cancelReservation(id, authentication.getName(), isAdmin);
+        reservationService.cancelReservation(id, authentication.getName(), isAdmin(authentication));
     }
 
     @DeleteMapping("/blocks/{blockId}")
@@ -198,5 +181,17 @@ public class ReservationController {
             })
     public void deleteAdminBlock(@PathVariable UUID blockId) {
         reservationService.deleteAdminBlock(blockId);
+    }
+
+    private boolean isAdmin(Authentication auth) {
+        return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    private Role roleFrom(Authentication auth) {
+        return auth.getAuthorities().stream()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .map(Role::valueOf)
+                .findFirst()
+                .orElse(Role.STUDENT);
     }
 }

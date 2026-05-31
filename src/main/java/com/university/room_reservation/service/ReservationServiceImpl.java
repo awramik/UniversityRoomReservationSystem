@@ -1,12 +1,14 @@
 package com.university.room_reservation.service;
 
 import com.university.room_reservation.config.BookingLimitsProperties;
+import com.university.room_reservation.dto.AvailabilityResponse;
+import com.university.room_reservation.dto.ReservationDetailResponse;
 import com.university.room_reservation.exception.*;
 import com.university.room_reservation.model.*;
 import com.university.room_reservation.repository.ReservationRepository;
+import com.university.room_reservation.repository.ReservationSpecs;
 import com.university.room_reservation.repository.RoomRepository;
-import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.jpa.domain.Specification;
+import com.university.room_reservation.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +17,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -27,13 +28,16 @@ public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
+    private final UserRepository userRepository;
     private final BookingLimitsProperties limits;
 
     public ReservationServiceImpl(ReservationRepository reservationRepository,
                                   RoomRepository roomRepository,
+                                  UserRepository userRepository,
                                   BookingLimitsProperties limits) {
         this.reservationRepository = reservationRepository;
         this.roomRepository = roomRepository;
+        this.userRepository = userRepository;
         this.limits = limits;
     }
 
@@ -135,44 +139,44 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional
     public List<Reservation> listReservations(LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status, String username) {
         reservationRepository.markAllExpiredAsPast(LocalDateTime.now());
-        Specification<Reservation> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("type"), ReservationType.BOOKING));
-            if (startDate != null)
-                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), startDate.atStartOfDay()));
-            if (endDate != null)
-                predicates.add(cb.lessThanOrEqualTo(root.get("endTime"), endDate.plusDays(1).atStartOfDay()));
-            if (roomId != null)
-                predicates.add(cb.equal(root.get("room").get("id"), roomId));
-            if (status != null)
-                predicates.add(cb.equal(root.get("status"), status));
-            if (username != null)
-                predicates.add(cb.equal(root.get("bookerName"), username));
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-        return reservationRepository.findAll(spec);
+        return reservationRepository.findAll(ReservationSpecs.bookingsMatching(startDate, endDate, roomId, status, username));
     }
 
     @Override
     @Transactional
     public List<Reservation> listMyReservations(String username) {
-        reservationRepository.markExpiredAsPastForUser(LocalDateTime.now(), username);
+        reservationRepository.markAllExpiredAsPast(LocalDateTime.now());
         return reservationRepository.findAllByTypeAndBookerName(ReservationType.BOOKING, username);
     }
 
     @Override
     @Transactional
-    public Reservation getReservation(UUID reservationId) {
+    public ReservationDetailResponse getReservationDetail(UUID reservationId, boolean isAdmin) {
+        reservationRepository.markAllExpiredAsPast(LocalDateTime.now());
         Reservation reservation = reservationRepository.findByIdAndType(reservationId, ReservationType.BOOKING)
                 .orElseThrow(() -> new ReservationNotFoundException(reservationId));
-
-        if (reservation.getStatus() == ReservationStatus.ACTIVE
-                && reservation.getEndTime().isBefore(LocalDateTime.now())) {
-            reservation.setStatus(ReservationStatus.PAST);
-            reservationRepository.save(reservation);
+        if (isAdmin) {
+            var booker = userRepository.findByUsername(reservation.getBookerName())
+                    .orElseThrow(() -> new UserNotFoundException(reservation.getBookerName()));
+            return ReservationDetailResponse.from(reservation, booker);
         }
+        return ReservationDetailResponse.fromPublic(reservation);
+    }
 
-        return reservation;
+    @Override
+    public AvailabilityResponse checkAvailability(UUID roomId, LocalDateTime start, LocalDateTime end) {
+        if (!end.isAfter(start)) throw new InvalidTimeRangeException("End time must be after start time");
+        if (!roomRepository.existsById(roomId)) throw new RoomNotFoundException(roomId);
+
+        var conflicts = reservationRepository
+                .findAllByRoomIdAndStartTimeLessThanAndEndTimeGreaterThan(roomId, end, start)
+                .stream()
+                .filter(r -> r.getStatus() != ReservationStatus.CANCELLED)
+                .map(r -> new AvailabilityResponse.ConflictInterval(r.getStartTime(), r.getEndTime()))
+                .toList();
+
+        return conflicts.isEmpty()
+                ? new AvailabilityResponse(true, null)
+                : new AvailabilityResponse(false, conflicts);
     }
 }
-

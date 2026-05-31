@@ -1,5 +1,7 @@
 package com.university.room_reservation.service;
 
+import com.university.room_reservation.dto.AvailabilityResponse;
+import com.university.room_reservation.dto.ReservationDetailResponse;
 import com.university.room_reservation.model.Reservation;
 import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.model.Role;
@@ -23,5 +25,7 @@ public interface ReservationService {
 
     List<Reservation> listMyReservations(String username);
 
-    Reservation getReservation(UUID reservationId);
+    ReservationDetailResponse getReservationDetail(UUID reservationId, boolean isAdmin);
+
+    AvailabilityResponse checkAvailability(UUID roomId, LocalDateTime start, LocalDateTime end);
 }
