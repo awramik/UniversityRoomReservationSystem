@@ -7,6 +7,7 @@ import com.university.room_reservation.dto.ReservationDetailResponse;
 import com.university.room_reservation.dto.ReservationRequest;
 import com.university.room_reservation.dto.ReservationResponse;
 import com.university.room_reservation.service.ReservationService;
+import com.university.room_reservation.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,9 +30,11 @@ import java.util.UUID;
 public class ReservationController {
 
     private final ReservationService reservationService;
+    private final UserService userService;
 
-    public ReservationController(ReservationService reservationService) {
+    public ReservationController(ReservationService reservationService, UserService userService) {
         this.reservationService = reservationService;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -75,7 +78,11 @@ public class ReservationController {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         var reservation = reservationService.getReservation(id);
-        return isAdmin ? ReservationDetailResponse.from(reservation) : ReservationDetailResponse.fromPublic(reservation);
+        if (isAdmin) {
+            var booker = userService.getByUsername(reservation.getBookerName());
+            return ReservationDetailResponse.from(reservation, booker);
+        }
+        return ReservationDetailResponse.fromPublic(reservation);
     }
 
     @PostMapping
