@@ -91,6 +91,24 @@ public class ReservationController {
         );
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Cancel a reservation",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Reservation cancelled"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Not your reservation",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Reservation not found",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public void cancelReservation(@PathVariable UUID id, Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        reservationService.cancelReservation(id, authentication.getName(), isAdmin);
+    }
+
     @DeleteMapping("/blocks/{blockId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")

@@ -12,4 +12,6 @@ public interface ReservationService {
     Reservation createAdminBlock(UUID roomId, LocalDateTime start, LocalDateTime end, String adminUsername, String purpose);
 
     void deleteAdminBlock(UUID blockId);
+
+    void cancelReservation(UUID reservationId, String callerUsername, boolean isAdmin);
 }
