@@ -17,4 +17,8 @@ public interface ReservationService {
     void cancelReservation(UUID reservationId, String callerUsername, boolean isAdmin);
 
     List<Reservation> listReservations();
+
+    List<Reservation> listMyReservations(String username);
+
+    Reservation getReservation(UUID reservationId);
 }

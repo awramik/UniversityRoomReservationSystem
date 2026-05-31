@@ -3,6 +3,7 @@ package com.university.room_reservation.controller;
 import com.university.room_reservation.dto.AdminBlockRequest;
 import com.university.room_reservation.dto.AdminBlockResponse;
 import com.university.room_reservation.dto.ErrorResponse;
+import com.university.room_reservation.dto.ReservationDetailResponse;
 import com.university.room_reservation.dto.ReservationRequest;
 import com.university.room_reservation.dto.ReservationResponse;
 import com.university.room_reservation.service.ReservationService;
@@ -46,6 +47,35 @@ public class ReservationController {
         return reservationService.listReservations().stream()
                 .map(r -> isAdmin ? ReservationResponse.from(r) : ReservationResponse.fromPublic(r))
                 .toList();
+    }
+
+    @GetMapping("/my")
+    @Operation(summary = "List current user's reservations",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Reservation list returned"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public List<ReservationResponse> listMyReservations(Authentication authentication) {
+        return reservationService.listMyReservations(authentication.getName()).stream()
+                .map(ReservationResponse::from)
+                .toList();
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get reservation details (full room info; booker name visible to admins only)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Reservation found"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Reservation not found",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public ReservationDetailResponse getReservation(@PathVariable UUID id, Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        var reservation = reservationService.getReservation(id);
+        return isAdmin ? ReservationDetailResponse.from(reservation) : ReservationDetailResponse.fromPublic(reservation);
     }
 
     @PostMapping

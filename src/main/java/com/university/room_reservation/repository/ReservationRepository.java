@@ -18,4 +18,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
     Optional<Reservation> findByIdAndType(UUID id, ReservationType type);
 
     List<Reservation> findAllByType(ReservationType type);
+
+    List<Reservation> findAllByTypeAndBookerName(ReservationType type, String bookerName);
 }
