@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -30,6 +31,21 @@ public class ReservationController {
 
     public ReservationController(ReservationService reservationService) {
         this.reservationService = reservationService;
+    }
+
+    @GetMapping
+    @Operation(summary = "List all reservations (booker name visible to admins only)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Reservation list returned"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public List<ReservationResponse> listReservations(Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return reservationService.listReservations().stream()
+                .map(r -> isAdmin ? ReservationResponse.from(r) : ReservationResponse.fromPublic(r))
+                .toList();
     }
 
     @PostMapping
