@@ -108,7 +108,7 @@ All locked endpoints will now include your Bearer token automatically.
 |-----------|-----------|---------|
 | `admin`   | `admin`   | ADMIN   |
 | `student` | `student` | STUDENT |
-| `teacher` | `teacher` | TEACHER |
+| `teacher` | `teacher` | LECTURER |
 
 > **ADMIN** can access all endpoints including user management.  
-> **STUDENT** and **TEACHER** have access to their own profile and reservation-related endpoints.
+> **STUDENT** and **LECTURER** have access to their own profile and reservation-related endpoints.

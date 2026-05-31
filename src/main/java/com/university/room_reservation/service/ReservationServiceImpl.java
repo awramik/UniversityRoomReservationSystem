@@ -55,7 +55,7 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         if (role != Role.ADMIN) {
-            BookingLimitsProperties.RoleLimits roleLimits = role == Role.TEACHER ? limits.getTeacher() : limits.getStudent();
+            BookingLimitsProperties.RoleLimits roleLimits = role == Role.LECTURER ? limits.getLecturer() : limits.getStudent();
 
             long durationHours = Duration.between(start, end).toHours();
             if (durationHours > roleLimits.getMaxDurationHours()) {
