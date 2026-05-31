@@ -3,9 +3,11 @@ package com.university.room_reservation.controller;
 import com.university.room_reservation.dto.AdminBlockRequest;
 import com.university.room_reservation.dto.AdminBlockResponse;
 import com.university.room_reservation.dto.ErrorResponse;
+import com.university.room_reservation.dto.ReservationDetailResponse;
 import com.university.room_reservation.dto.ReservationRequest;
 import com.university.room_reservation.dto.ReservationResponse;
 import com.university.room_reservation.service.ReservationService;
+import com.university.room_reservation.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,9 +30,59 @@ import java.util.UUID;
 public class ReservationController {
 
     private final ReservationService reservationService;
+    private final UserService userService;
 
-    public ReservationController(ReservationService reservationService) {
+    public ReservationController(ReservationService reservationService, UserService userService) {
         this.reservationService = reservationService;
+        this.userService = userService;
+    }
+
+    @GetMapping
+    @Operation(summary = "List all reservations (booker name visible to admins only)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Reservation list returned"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public List<ReservationResponse> listReservations(Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return reservationService.listReservations().stream()
+                .map(r -> isAdmin ? ReservationResponse.from(r) : ReservationResponse.fromPublic(r))
+                .toList();
+    }
+
+    @GetMapping("/my")
+    @Operation(summary = "List current user's reservations",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Reservation list returned"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public List<ReservationResponse> listMyReservations(Authentication authentication) {
+        return reservationService.listMyReservations(authentication.getName()).stream()
+                .map(ReservationResponse::from)
+                .toList();
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get reservation details (full room info; booker name visible to admins only)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Reservation found"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Reservation not found",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public ReservationDetailResponse getReservation(@PathVariable UUID id, Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        var reservation = reservationService.getReservation(id);
+        if (isAdmin) {
+            var booker = userService.getByUsername(reservation.getBookerName());
+            return ReservationDetailResponse.from(reservation, booker);
+        }
+        return ReservationDetailResponse.fromPublic(reservation);
     }
 
     @PostMapping

@@ -2,35 +2,34 @@ package com.university.room_reservation.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.university.room_reservation.model.Reservation;
+import com.university.room_reservation.model.User;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record ReservationResponse(
+public record ReservationDetailResponse(
         UUID id,
-        UUID roomId,
-        String roomName,
+        RoomResponse room,
         LocalDateTime startTime,
         LocalDateTime endTime,
-        @JsonInclude(JsonInclude.Include.NON_NULL) String bookerName,
+        @JsonInclude(JsonInclude.Include.NON_NULL) UserProfileResponse booker,
         String purpose
 ) {
-    public static ReservationResponse from(Reservation reservation) {
-        return new ReservationResponse(
+    public static ReservationDetailResponse from(Reservation reservation, User booker) {
+        return new ReservationDetailResponse(
                 reservation.getId(),
-                reservation.getRoom().getId(),
-                reservation.getRoom().getName(),
+                RoomResponse.from(reservation.getRoom()),
                 reservation.getStartTime(),
                 reservation.getEndTime(),
-                reservation.getBookerName(),
+                UserProfileResponse.from(booker),
                 reservation.getPurpose()
         );
     }
 
-    public static ReservationResponse fromPublic(Reservation reservation) {
-        return new ReservationResponse(
+    public static ReservationDetailResponse fromPublic(Reservation reservation) {
+        return new ReservationDetailResponse(
                 reservation.getId(),
-                reservation.getRoom().getId(),
-                reservation.getRoom().getName(),
+                RoomResponse.from(reservation.getRoom()),
                 reservation.getStartTime(),
                 reservation.getEndTime(),
                 null,

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -74,5 +75,21 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         reservationRepository.delete(reservation);
+    }
+
+    @Override
+    public List<Reservation> listReservations() {
+        return reservationRepository.findAllByType(ReservationType.BOOKING);
+    }
+
+    @Override
+    public List<Reservation> listMyReservations(String username) {
+        return reservationRepository.findAllByTypeAndBookerName(ReservationType.BOOKING, username);
+    }
+
+    @Override
+    public Reservation getReservation(UUID reservationId) {
+        return reservationRepository.findByIdAndType(reservationId, ReservationType.BOOKING)
+                .orElseThrow(() -> new ReservationNotFoundException(reservationId));
     }
 }
