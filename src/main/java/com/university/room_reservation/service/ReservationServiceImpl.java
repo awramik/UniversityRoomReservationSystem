@@ -57,12 +57,9 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional
-    public void deleteAdminBlock(UUID roomId, UUID blockId) {
+    public void deleteAdminBlock(UUID blockId) {
         Reservation block = reservationRepository.findByIdAndType(blockId, ReservationType.ADMIN_BLOCK)
                 .orElseThrow(() -> new ReservationNotFoundException(blockId));
-        if (!block.getRoom().getId().equals(roomId)) {
-            throw new ReservationNotFoundException(blockId);
-        }
         reservationRepository.delete(block);
     }
 }
