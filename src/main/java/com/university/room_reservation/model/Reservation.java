@@ -26,6 +26,10 @@ public class Reservation {
     @Enumerated(EnumType.STRING)
     private ReservationType type;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ReservationStatus status = ReservationStatus.ACTIVE;
+
     public Reservation() {}
 
     public Reservation(Room room, LocalDateTime startTime, LocalDateTime endTime, String bookerName, ReservationType type, String purpose) {
@@ -51,4 +55,6 @@ public class Reservation {
     public void setPurpose(String purpose) { this.purpose = purpose; }
     public ReservationType getType() { return type; }
     public void setType(ReservationType type) { this.type = type; }
+    public ReservationStatus getStatus() { return status; }
+    public void setStatus(ReservationStatus status) { this.status = status; }
 }

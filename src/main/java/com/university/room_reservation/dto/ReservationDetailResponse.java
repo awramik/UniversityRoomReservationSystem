@@ -2,6 +2,7 @@ package com.university.room_reservation.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.university.room_reservation.model.Reservation;
+import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.model.User;
 
 import java.time.LocalDateTime;
@@ -13,7 +14,8 @@ public record ReservationDetailResponse(
         LocalDateTime startTime,
         LocalDateTime endTime,
         @JsonInclude(JsonInclude.Include.NON_NULL) UserProfileResponse booker,
-        String purpose
+        String purpose,
+        ReservationStatus status
 ) {
     public static ReservationDetailResponse from(Reservation reservation, User booker) {
         return new ReservationDetailResponse(
@@ -22,7 +24,8 @@ public record ReservationDetailResponse(
                 reservation.getStartTime(),
                 reservation.getEndTime(),
                 UserProfileResponse.from(booker),
-                reservation.getPurpose()
+                reservation.getPurpose(),
+                reservation.getStatus()
         );
     }
 
@@ -33,7 +36,8 @@ public record ReservationDetailResponse(
                 reservation.getStartTime(),
                 reservation.getEndTime(),
                 null,
-                reservation.getPurpose()
+                reservation.getPurpose(),
+                reservation.getStatus()
         );
     }
 }
