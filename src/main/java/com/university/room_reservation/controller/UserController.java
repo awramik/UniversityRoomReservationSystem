@@ -1,6 +1,7 @@
 package com.university.room_reservation.controller;
 
 import com.university.room_reservation.dto.ErrorResponse;
+import com.university.room_reservation.dto.UpdateUserProfileRequest;
 import com.university.room_reservation.dto.UserProfileResponse;
 import com.university.room_reservation.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,22 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @PatchMapping("/me")
+    @Operation(summary = "Update own profile (email, name, surname)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Profile updated"),
+                    @ApiResponse(responseCode = "400", description = "Validation error",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "409", description = "Email already in use",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public UserProfileResponse updateMe(@AuthenticationPrincipal String username,
+                                        @Valid @RequestBody UpdateUserProfileRequest request) {
+        return UserProfileResponse.from(userService.updateProfile(username, request));
     }
 
     @GetMapping("/me")
