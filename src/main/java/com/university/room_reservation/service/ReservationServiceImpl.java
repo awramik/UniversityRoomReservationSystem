@@ -62,4 +62,17 @@ public class ReservationServiceImpl implements ReservationService {
                 .orElseThrow(() -> new ReservationNotFoundException(blockId));
         reservationRepository.delete(block);
     }
+
+    @Override
+    @Transactional
+    public void cancelReservation(UUID reservationId, String callerUsername, boolean isAdmin) {
+        Reservation reservation = reservationRepository.findByIdAndType(reservationId, ReservationType.BOOKING)
+                .orElseThrow(() -> new ReservationNotFoundException(reservationId));
+
+        if (!isAdmin && !reservation.getBookerName().equals(callerUsername)) {
+            throw new org.springframework.security.access.AccessDeniedException("You can only cancel your own reservations");
+        }
+
+        reservationRepository.delete(reservation);
+    }
 }
