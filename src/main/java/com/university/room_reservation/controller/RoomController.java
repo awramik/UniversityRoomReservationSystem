@@ -1,5 +1,6 @@
 package com.university.room_reservation.controller;
 
+import com.university.room_reservation.dto.AvailabilityResponse;
 import com.university.room_reservation.dto.ErrorResponse;
 import com.university.room_reservation.dto.RoomRequest;
 import com.university.room_reservation.dto.RoomResponse;
@@ -16,9 +17,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -111,21 +111,20 @@ public class RoomController {
     }
 
     @GetMapping("/{id}/availability")
-    @Operation(summary = "Check if a room is available for given dates",
+    @Operation(summary = "Check if a room is available for a given time window",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Room is available"),
+                    @ApiResponse(responseCode = "200", description = "Availability status returned"),
+                    @ApiResponse(responseCode = "400", description = "Invalid time range",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
                     @ApiResponse(responseCode = "401", description = "Not authenticated",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Room not found",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "501", description = "Not yet implemented",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public void checkAvailability(
+    public AvailabilityResponse checkAvailability(
             @PathVariable UUID id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        roomService.getRoom(id);
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Availability check not yet implemented");
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+        return roomService.checkAvailability(id, startTime, endTime);
     }
 }

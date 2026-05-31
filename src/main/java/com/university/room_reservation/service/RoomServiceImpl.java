@@ -1,12 +1,17 @@
 package com.university.room_reservation.service;
 
+import com.university.room_reservation.dto.AvailabilityResponse;
 import com.university.room_reservation.dto.RoomRequest;
 import com.university.room_reservation.dto.UpdateRoomRequest;
+import com.university.room_reservation.exception.InvalidTimeRangeException;
 import com.university.room_reservation.exception.RoomNotFoundException;
+import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.model.Room;
+import com.university.room_reservation.repository.ReservationRepository;
 import com.university.room_reservation.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,9 +19,11 @@ import java.util.UUID;
 public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
+    private final ReservationRepository reservationRepository;
 
-    public RoomServiceImpl(RoomRepository roomRepository) {
+    public RoomServiceImpl(RoomRepository roomRepository, ReservationRepository reservationRepository) {
         this.roomRepository = roomRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     @Override
@@ -50,5 +57,22 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public Room getRoom(UUID id) {
         return roomRepository.findById(id).orElseThrow(() -> new RoomNotFoundException(id));
+    }
+
+    @Override
+    public AvailabilityResponse checkAvailability(UUID roomId, LocalDateTime start, LocalDateTime end) {
+        if (!end.isAfter(start)) throw new InvalidTimeRangeException("End time must be after start time");
+        if (!roomRepository.existsById(roomId)) throw new RoomNotFoundException(roomId);
+
+        var conflicts = reservationRepository
+                .findAllByRoomIdAndStartTimeLessThanAndEndTimeGreaterThan(roomId, end, start)
+                .stream()
+                .filter(r -> r.getStatus() != ReservationStatus.CANCELLED)
+                .map(r -> new AvailabilityResponse.ConflictInterval(r.getStartTime(), r.getEndTime()))
+                .toList();
+
+        return conflicts.isEmpty()
+                ? new AvailabilityResponse(true, null)
+                : new AvailabilityResponse(false, conflicts);
     }
 }
