@@ -1,9 +1,12 @@
 package com.university.room_reservation.controller;
 
+import com.university.room_reservation.dto.AdminBlockRequest;
+import com.university.room_reservation.dto.AdminBlockResponse;
 import com.university.room_reservation.dto.ErrorResponse;
 import com.university.room_reservation.dto.RoomRequest;
 import com.university.room_reservation.dto.RoomResponse;
 import com.university.room_reservation.dto.UpdateRoomRequest;
+import com.university.room_reservation.service.ReservationService;
 import com.university.room_reservation.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,6 +18,7 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -28,9 +32,11 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
+    private final ReservationService reservationService;
 
-    public RoomController(RoomService roomService) {
+    public RoomController(RoomService roomService, ReservationService reservationService) {
         this.roomService = roomService;
+        this.reservationService = reservationService;
     }
 
     @GetMapping
@@ -126,5 +132,46 @@ public class RoomController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         roomService.getRoom(id);
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Availability check not yet implemented");
+    }
+
+    @PostMapping("/{id}/blocks")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create an admin unavailability block for a room (admin only)",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Block created"),
+                    @ApiResponse(responseCode = "400", description = "Invalid time range",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Admin role required",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Room not found",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public AdminBlockResponse createAdminBlock(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminBlockRequest request,
+            Authentication authentication) {
+        return AdminBlockResponse.from(
+                reservationService.createAdminBlock(id, request.startTime(), request.endTime(), authentication.getName(), request.purpose())
+        );
+    }
+
+    @DeleteMapping("/{id}/blocks/{blockId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete an admin unavailability block (admin only)",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Block deleted"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Admin role required",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Block not found",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public void deleteAdminBlock(@PathVariable Long id, @PathVariable Long blockId) {
+        reservationService.deleteAdminBlock(id, blockId);
     }
 }

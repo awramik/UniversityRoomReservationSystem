@@ -1,6 +1,8 @@
 package com.university.room_reservation.exception;
 
 import com.university.room_reservation.dto.ErrorResponse;
+import com.university.room_reservation.exception.AdminBlockConflictException;
+import com.university.room_reservation.exception.InvalidTimeRangeException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
@@ -48,10 +50,16 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage());
     }
 
-    @ExceptionHandler({BookingLimitExceededException.class, RoomNotAvailableException.class})
+    @ExceptionHandler({BookingLimitExceededException.class, RoomNotAvailableException.class, AdminBlockConflictException.class})
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     public ErrorResponse handleUnprocessable(RuntimeException ex) {
         return new ErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidTimeRangeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleInvalidTimeRange(InvalidTimeRangeException ex) {
+        return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
     }
 
     @ExceptionHandler(RoomBookingNotAllowedException.class)
