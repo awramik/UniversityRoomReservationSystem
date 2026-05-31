@@ -1,40 +1,74 @@
 package com.university.room_reservation.service;
 
+import com.university.room_reservation.config.BookingLimitsProperties;
 import com.university.room_reservation.exception.*;
-import com.university.room_reservation.model.Reservation;
-import com.university.room_reservation.model.ReservationStatus;
-import com.university.room_reservation.model.ReservationType;
+import com.university.room_reservation.model.*;
 import com.university.room_reservation.repository.ReservationRepository;
 import com.university.room_reservation.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class ReservationServiceImpl implements ReservationService {
 
+    private static final Set<RoomType> LECTURER_ONLY_TYPES = Set.of(RoomType.LECTURE, RoomType.LABORATORY);
+
     private final ReservationRepository reservationRepository;
     private final RoomRepository roomRepository;
+    private final BookingLimitsProperties limits;
 
-    public ReservationServiceImpl(ReservationRepository reservationRepository, RoomRepository roomRepository) {
+    public ReservationServiceImpl(ReservationRepository reservationRepository,
+                                  RoomRepository roomRepository,
+                                  BookingLimitsProperties limits) {
         this.reservationRepository = reservationRepository;
         this.roomRepository = roomRepository;
+        this.limits = limits;
     }
 
     @Override
     @Transactional
-    public Reservation createReservation(UUID roomId, LocalDateTime start, LocalDateTime end, String bookerName, String purpose) {
+    public Reservation createReservation(UUID roomId, LocalDateTime start, LocalDateTime end, String bookerName, Role role, String purpose) {
         if (!start.isAfter(LocalDateTime.now())) {
             throw new InvalidTimeRangeException("Reservation start time must be in the future");
         }
         if (!end.isAfter(start)) {
             throw new InvalidTimeRangeException("End time must be after start time");
         }
+
         var room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RoomNotFoundException(roomId));
+
+        if (role == Role.STUDENT && LECTURER_ONLY_TYPES.contains(room.getRoomType())) {
+            throw new RoomBookingNotAllowedException(role.name(), room.getRoomType().name());
+        }
+
+        if (role != Role.ADMIN) {
+            BookingLimitsProperties.RoleLimits roleLimits = role == Role.TEACHER ? limits.getTeacher() : limits.getStudent();
+
+            long durationHours = Duration.between(start, end).toHours();
+            if (durationHours > roleLimits.getMaxDurationHours()) {
+                throw new BookingLimitExceededException(
+                        "Reservation exceeds maximum allowed duration of " + roleLimits.getMaxDurationHours() + " hours");
+            }
+
+            LocalDateTime weekStart = start.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toLocalDate().atStartOfDay();
+            LocalDateTime weekEnd = weekStart.plusWeeks(1);
+            long weeklyCount = reservationRepository
+                    .countByBookerNameAndTypeAndStatusAndStartTimeGreaterThanEqualAndStartTimeLessThan(
+                            bookerName, ReservationType.BOOKING, ReservationStatus.ACTIVE, weekStart, weekEnd);
+            if (weeklyCount >= roleLimits.getMaxPerWeek()) {
+                throw new BookingLimitExceededException(
+                        "Weekly reservation limit of " + roleLimits.getMaxPerWeek() + " reached");
+            }
+        }
 
         if (reservationRepository.existsByRoomIdAndTypeAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
                 roomId, ReservationType.BOOKING, ReservationStatus.ACTIVE, end, start)) {
