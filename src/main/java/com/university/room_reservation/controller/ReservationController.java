@@ -7,6 +7,7 @@ import com.university.room_reservation.dto.ReservationDetailResponse;
 import com.university.room_reservation.dto.ReservationRequest;
 import com.university.room_reservation.dto.ReservationResponse;
 import com.university.room_reservation.model.Role;
+import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.service.ReservationService;
 import com.university.room_reservation.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,11 +17,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,16 +42,21 @@ public class ReservationController {
     }
 
     @GetMapping
-    @Operation(summary = "List all reservations (booker name visible to admins only)",
+    @Operation(summary = "List all reservations, with optional filters by date range, room and status (booker name visible to admins only)",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Reservation list returned"),
                     @ApiResponse(responseCode = "401", description = "Not authenticated",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public List<ReservationResponse> listReservations(Authentication authentication) {
+    public List<ReservationResponse> listReservations(
+            Authentication authentication,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) UUID roomId,
+            @RequestParam(required = false) ReservationStatus status) {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        return reservationService.listReservations().stream()
+        return reservationService.listReservations(startDate, endDate, roomId, status).stream()
                 .map(r -> isAdmin ? ReservationResponse.from(r) : ReservationResponse.fromPublic(r))
                 .toList();
     }
