@@ -7,6 +7,7 @@ import com.university.room_reservation.dto.ReservationDetailResponse;
 import com.university.room_reservation.dto.ReservationRequest;
 import com.university.room_reservation.dto.ReservationResponse;
 import com.university.room_reservation.model.Role;
+import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.service.ReservationService;
 import com.university.room_reservation.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,11 +17,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,22 +42,33 @@ public class ReservationController {
     }
 
     @GetMapping
-    @Operation(summary = "List all reservations (booker name visible to admins only)",
+    @Operation(summary = "List all reservations, with optional filters (booker name visible to admins only; username filter is admin-only)",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Reservation list returned"),
                     @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "username filter requires admin role",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public List<ReservationResponse> listReservations(Authentication authentication) {
+    public List<ReservationResponse> listReservations(
+            Authentication authentication,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) UUID roomId,
+            @RequestParam(required = false) ReservationStatus status,
+            @RequestParam(required = false) String username) {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        return reservationService.listReservations().stream()
+        if (!isAdmin && username != null) {
+            throw new org.springframework.security.access.AccessDeniedException("username filter requires admin role");
+        }
+        return reservationService.listReservations(startDate, endDate, roomId, status, username).stream()
                 .map(r -> isAdmin ? ReservationResponse.from(r) : ReservationResponse.fromPublic(r))
                 .toList();
     }
 
     @GetMapping("/my")
-    @Operation(summary = "List current user's reservations",
+    @Operation(summary = "List current user's own reservations",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Reservation list returned"),
                     @ApiResponse(responseCode = "401", description = "Not authenticated",

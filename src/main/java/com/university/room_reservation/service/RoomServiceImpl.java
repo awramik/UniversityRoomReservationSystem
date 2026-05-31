@@ -7,11 +7,15 @@ import com.university.room_reservation.exception.InvalidTimeRangeException;
 import com.university.room_reservation.exception.RoomNotFoundException;
 import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.model.Room;
+import com.university.room_reservation.model.RoomType;
 import com.university.room_reservation.repository.ReservationRepository;
 import com.university.room_reservation.repository.RoomRepository;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,8 +54,16 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public List<Room> listRooms() {
-        return roomRepository.findAll();
+    public List<Room> listRooms(RoomType type, String building, Integer minCapacity, Integer maxCapacity) {
+        Specification<Room> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (type != null) predicates.add(cb.equal(root.get("roomType"), type));
+            if (building != null) predicates.add(cb.equal(root.get("buildingName"), building));
+            if (minCapacity != null) predicates.add(cb.greaterThanOrEqualTo(root.get("capacity"), minCapacity));
+            if (maxCapacity != null) predicates.add(cb.lessThanOrEqualTo(root.get("capacity"), maxCapacity));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return roomRepository.findAll(spec);
     }
 
     @Override

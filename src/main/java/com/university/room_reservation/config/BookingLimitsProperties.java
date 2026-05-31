@@ -8,13 +8,13 @@ import org.springframework.stereotype.Component;
 public class BookingLimitsProperties {
 
     private RoleLimits student = new RoleLimits();
-    private RoleLimits teacher = new RoleLimits();
+    private RoleLimits lecturer = new RoleLimits();
 
     public RoleLimits getStudent() { return student; }
     public void setStudent(RoleLimits student) { this.student = student; }
 
-    public RoleLimits getTeacher() { return teacher; }
-    public void setTeacher(RoleLimits teacher) { this.teacher = teacher; }
+    public RoleLimits getLecturer() { return lecturer; }
+    public void setLecturer(RoleLimits lecturer) { this.lecturer = lecturer; }
 
     public static class RoleLimits {
         private int maxDurationHours = 2;

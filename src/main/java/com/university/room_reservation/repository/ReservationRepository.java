@@ -4,6 +4,7 @@ import com.university.room_reservation.model.Reservation;
 import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.model.ReservationType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ReservationRepository extends JpaRepository<Reservation, UUID> {
+public interface ReservationRepository extends JpaRepository<Reservation, UUID>, JpaSpecificationExecutor<Reservation> {
 
     boolean existsByRoomIdAndTypeAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
             UUID roomId, ReservationType type, ReservationStatus status, LocalDateTime end, LocalDateTime start);

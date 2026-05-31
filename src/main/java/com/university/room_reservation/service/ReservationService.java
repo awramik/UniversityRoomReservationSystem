@@ -1,8 +1,10 @@
 package com.university.room_reservation.service;
 
 import com.university.room_reservation.model.Reservation;
+import com.university.room_reservation.model.ReservationStatus;
 import com.university.room_reservation.model.Role;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -17,7 +19,7 @@ public interface ReservationService {
 
     void cancelReservation(UUID reservationId, String callerUsername, boolean isAdmin);
 
-    List<Reservation> listReservations();
+    List<Reservation> listReservations(LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status, String username);
 
     List<Reservation> listMyReservations(String username);
 

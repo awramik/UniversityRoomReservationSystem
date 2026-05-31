@@ -5,13 +5,17 @@ import com.university.room_reservation.exception.*;
 import com.university.room_reservation.model.*;
 import com.university.room_reservation.repository.ReservationRepository;
 import com.university.room_reservation.repository.RoomRepository;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -51,7 +55,7 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         if (role != Role.ADMIN) {
-            BookingLimitsProperties.RoleLimits roleLimits = role == Role.TEACHER ? limits.getTeacher() : limits.getStudent();
+            BookingLimitsProperties.RoleLimits roleLimits = role == Role.LECTURER ? limits.getLecturer() : limits.getStudent();
 
             long durationHours = Duration.between(start, end).toHours();
             if (durationHours > roleLimits.getMaxDurationHours()) {
@@ -129,9 +133,24 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional
-    public List<Reservation> listReservations() {
+    public List<Reservation> listReservations(LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status, String username) {
         reservationRepository.markAllExpiredAsPast(LocalDateTime.now());
-        return reservationRepository.findAllByType(ReservationType.BOOKING);
+        Specification<Reservation> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("type"), ReservationType.BOOKING));
+            if (startDate != null)
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), startDate.atStartOfDay()));
+            if (endDate != null)
+                predicates.add(cb.lessThanOrEqualTo(root.get("endTime"), endDate.plusDays(1).atStartOfDay()));
+            if (roomId != null)
+                predicates.add(cb.equal(root.get("room").get("id"), roomId));
+            if (status != null)
+                predicates.add(cb.equal(root.get("status"), status));
+            if (username != null)
+                predicates.add(cb.equal(root.get("bookerName"), username));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return reservationRepository.findAll(spec);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.university.room_reservation.dto.ErrorResponse;
 import com.university.room_reservation.dto.RoomRequest;
 import com.university.room_reservation.dto.RoomResponse;
 import com.university.room_reservation.dto.UpdateRoomRequest;
+import com.university.room_reservation.model.RoomType;
 import com.university.room_reservation.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,14 +36,20 @@ public class RoomController {
     }
 
     @GetMapping
-    @Operation(summary = "List all rooms",
+    @Operation(summary = "List all rooms, with optional filters by type, building and capacity range",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Room list returned"),
+                    @ApiResponse(responseCode = "400", description = "Invalid filter value",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
                     @ApiResponse(responseCode = "401", description = "Not authenticated",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public List<RoomResponse> listRooms() {
-        return roomService.listRooms().stream().map(RoomResponse::from).toList();
+    public List<RoomResponse> listRooms(
+            @RequestParam(required = false) RoomType type,
+            @RequestParam(required = false) String building,
+            @RequestParam(required = false) Integer minCapacity,
+            @RequestParam(required = false) Integer maxCapacity) {
+        return roomService.listRooms(type, building, minCapacity, maxCapacity).stream().map(RoomResponse::from).toList();
     }
 
     @GetMapping("/{id}")
