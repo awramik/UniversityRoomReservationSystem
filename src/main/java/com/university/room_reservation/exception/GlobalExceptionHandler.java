@@ -1,8 +1,11 @@
 package com.university.room_reservation.exception;
 
 import com.university.room_reservation.dto.ErrorResponse;
+import com.university.room_reservation.exception.AdminBlockConflictException;
+import com.university.room_reservation.exception.InvalidTimeRangeException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,6 +17,12 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleAccessDenied(AccessDeniedException ex) {
+        return new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Access denied");
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -48,10 +57,16 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage());
     }
 
-    @ExceptionHandler({BookingLimitExceededException.class, RoomNotAvailableException.class})
+    @ExceptionHandler({BookingLimitExceededException.class, RoomNotAvailableException.class, AdminBlockConflictException.class})
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     public ErrorResponse handleUnprocessable(RuntimeException ex) {
         return new ErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(), ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidTimeRangeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleInvalidTimeRange(InvalidTimeRangeException ex) {
+        return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
     }
 
     @ExceptionHandler(RoomBookingNotAllowedException.class)

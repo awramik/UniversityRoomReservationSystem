@@ -1,9 +1,10 @@
 package com.university.room_reservation.dto;
 
 import com.university.room_reservation.model.User;
+import java.util.UUID;
 
 public record UserProfileResponse(
-        Long id,
+        UUID id,
         String username,
         String name,
         String surname,

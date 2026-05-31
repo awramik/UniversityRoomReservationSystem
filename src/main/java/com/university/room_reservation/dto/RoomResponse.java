@@ -1,9 +1,10 @@
 package com.university.room_reservation.dto;
 
 import com.university.room_reservation.model.Room;
+import java.util.UUID;
 
 public record RoomResponse(
-        Long id,
+        UUID id,
         String name,
         String buildingName,
         int capacity,

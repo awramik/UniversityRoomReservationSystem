@@ -1,33 +1,15 @@
 package com.university.room_reservation.service;
 
 import com.university.room_reservation.model.Reservation;
-import com.university.room_reservation.repository.ReservationRepository;
-import com.university.room_reservation.repository.RoomRepository;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.UUID;
 
-@Service
-public class ReservationService {
+public interface ReservationService {
 
-    private final ReservationRepository reservationRepository;
-    private final RoomRepository roomRepository;
+    Reservation createReservation(UUID roomId, LocalDateTime start, LocalDateTime end, String bookerName, String purpose);
 
-    public ReservationService(ReservationRepository reservationRepository, RoomRepository roomRepository) {
-        this.reservationRepository = reservationRepository;
-        this.roomRepository = roomRepository;
-    }
+    Reservation createAdminBlock(UUID roomId, LocalDateTime start, LocalDateTime end, String adminUsername, String purpose);
 
-    public Reservation createReservation(Long roomId, LocalDateTime start, LocalDateTime end, String bookerName) {
-        throw new UnsupportedOperationException("Implement createReservation!");
-    }
-
-    public boolean isRoomAvailable(Long roomId, LocalDateTime start, LocalDateTime end) {
-        throw new UnsupportedOperationException("Implement isRoomAvailable!");
-    }
-
-    public List<Reservation> getAllReservations() {
-        throw new UnsupportedOperationException("Implement getAllReservations!");
-    }
+    void deleteAdminBlock(UUID blockId);
 }

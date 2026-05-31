@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/rooms")
@@ -53,7 +54,7 @@ public class RoomController {
                     @ApiResponse(responseCode = "404", description = "Room not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public RoomResponse getRoom(@PathVariable Long id) {
+    public RoomResponse getRoom(@PathVariable UUID id) {
         return RoomResponse.from(roomService.getRoom(id));
     }
 
@@ -88,7 +89,7 @@ public class RoomController {
                     @ApiResponse(responseCode = "404", description = "Room not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public RoomResponse updateRoom(@PathVariable Long id, @Valid @RequestBody UpdateRoomRequest request) {
+    public RoomResponse updateRoom(@PathVariable UUID id, @Valid @RequestBody UpdateRoomRequest request) {
         return RoomResponse.from(roomService.updateRoom(id, request));
     }
 
@@ -105,7 +106,7 @@ public class RoomController {
                     @ApiResponse(responseCode = "404", description = "Room not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public void removeRoom(@PathVariable Long id) {
+    public void removeRoom(@PathVariable UUID id) {
         roomService.removeRoom(id);
     }
 
@@ -121,7 +122,7 @@ public class RoomController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public void checkAvailability(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         roomService.getRoom(id);
