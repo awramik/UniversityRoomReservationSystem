@@ -2,6 +2,7 @@ package com.university.room_reservation.exception;
 
 import com.university.room_reservation.dto.ErrorResponse;
 import com.university.room_reservation.exception.AdminBlockConflictException;
+import com.university.room_reservation.exception.EmailAlreadyInUseException;
 import com.university.room_reservation.exception.InvalidTimeRangeException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,12 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(EmailAlreadyInUseException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleEmailInUse(EmailAlreadyInUseException ex) {
+        return new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage());
+    }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
