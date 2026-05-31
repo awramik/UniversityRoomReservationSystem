@@ -19,9 +19,7 @@ public interface ReservationService {
 
     void cancelReservation(UUID reservationId, String callerUsername, boolean isAdmin);
 
-    List<Reservation> listReservations(LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status);
-
-    List<Reservation> listMyReservations(String username);
+    List<Reservation> listReservations(LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status, String username);
 
     Reservation getReservation(UUID reservationId);
 }

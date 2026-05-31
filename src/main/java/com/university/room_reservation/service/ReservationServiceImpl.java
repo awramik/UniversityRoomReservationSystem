@@ -133,7 +133,7 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional
-    public List<Reservation> listReservations(LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status) {
+    public List<Reservation> listReservations(LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status, String username) {
         reservationRepository.markAllExpiredAsPast(LocalDateTime.now());
         Specification<Reservation> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -146,16 +146,11 @@ public class ReservationServiceImpl implements ReservationService {
                 predicates.add(cb.equal(root.get("room").get("id"), roomId));
             if (status != null)
                 predicates.add(cb.equal(root.get("status"), status));
+            if (username != null)
+                predicates.add(cb.equal(root.get("bookerName"), username));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         return reservationRepository.findAll(spec);
-    }
-
-    @Override
-    @Transactional
-    public List<Reservation> listMyReservations(String username) {
-        reservationRepository.markExpiredAsPastForUser(LocalDateTime.now(), username);
-        return reservationRepository.findAllByTypeAndBookerName(ReservationType.BOOKING, username);
     }
 
     @Override
