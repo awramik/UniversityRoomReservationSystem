@@ -6,6 +6,7 @@ import com.university.room_reservation.dto.ErrorResponse;
 import com.university.room_reservation.dto.ReservationDetailResponse;
 import com.university.room_reservation.dto.ReservationRequest;
 import com.university.room_reservation.dto.ReservationResponse;
+import com.university.room_reservation.model.Role;
 import com.university.room_reservation.service.ReservationService;
 import com.university.room_reservation.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -104,12 +105,18 @@ public class ReservationController {
     public ReservationResponse createReservation(
             @Valid @RequestBody ReservationRequest request,
             Authentication authentication) {
+        Role role = authentication.getAuthorities().stream()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .map(Role::valueOf)
+                .findFirst()
+                .orElse(Role.STUDENT);
         return ReservationResponse.from(
                 reservationService.createReservation(
                         request.roomId(),
                         request.startTime(),
                         request.endTime(),
                         authentication.getName(),
+                        role,
                         request.purpose()
                 )
         );

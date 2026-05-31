@@ -38,5 +38,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
     @Modifying
     @Query("UPDATE Reservation r SET r.status = 'PAST' WHERE r.status = 'ACTIVE' AND r.endTime < :now AND r.bookerName = :bookerName")
     void markExpiredAsPastForUser(@Param("now") LocalDateTime now, @Param("bookerName") String bookerName);
+
+    long countByBookerNameAndTypeAndStatusAndStartTimeGreaterThanEqualAndStartTimeLessThan(
+            String bookerName, ReservationType type, ReservationStatus status, LocalDateTime weekStart, LocalDateTime weekEnd);
 }
 
