@@ -21,5 +21,7 @@ public interface ReservationService {
 
     List<Reservation> listReservations(LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status, String username);
 
+    List<Reservation> listMyReservations(String username);
+
     Reservation getReservation(UUID reservationId);
 }

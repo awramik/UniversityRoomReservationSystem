@@ -42,12 +42,12 @@ public class ReservationController {
     }
 
     @GetMapping
-    @Operation(summary = "List all reservations, with optional filters by date range, room, status and username (booker name visible to admins only; non-admins may only filter by their own username)",
+    @Operation(summary = "List all reservations, with optional filters (booker name visible to admins only; username filter is admin-only)",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Reservation list returned"),
                     @ApiResponse(responseCode = "401", description = "Not authenticated",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "403", description = "Non-admin filtering by another user's username",
+                    @ApiResponse(responseCode = "403", description = "username filter requires admin role",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public List<ReservationResponse> listReservations(
@@ -59,13 +59,24 @@ public class ReservationController {
             @RequestParam(required = false) String username) {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        if (!isAdmin && username != null && !username.equals(authentication.getName())) {
-            throw new org.springframework.security.access.AccessDeniedException("You can only filter by your own username");
+        if (!isAdmin && username != null) {
+            throw new org.springframework.security.access.AccessDeniedException("username filter requires admin role");
         }
         return reservationService.listReservations(startDate, endDate, roomId, status, username).stream()
-                .map(r -> isAdmin || (username != null && username.equals(authentication.getName()))
-                        ? ReservationResponse.from(r)
-                        : ReservationResponse.fromPublic(r))
+                .map(r -> isAdmin ? ReservationResponse.from(r) : ReservationResponse.fromPublic(r))
+                .toList();
+    }
+
+    @GetMapping("/my")
+    @Operation(summary = "List current user's own reservations",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Reservation list returned"),
+                    @ApiResponse(responseCode = "401", description = "Not authenticated",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
+    public List<ReservationResponse> listMyReservations(Authentication authentication) {
+        return reservationService.listMyReservations(authentication.getName()).stream()
+                .map(ReservationResponse::from)
                 .toList();
     }
 

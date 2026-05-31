@@ -154,6 +154,13 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Override
+    @Transactional
+        reservationRepository.markExpiredAsPastForUser(LocalDateTime.now(), username);
+        return reservationRepository.findAllByTypeAndBookerName(ReservationType.BOOKING, username);
+    }
+
+    @Override
     @Transactional
     public Reservation getReservation(UUID reservationId) {
         Reservation reservation = reservationRepository.findByIdAndType(reservationId, ReservationType.BOOKING)
