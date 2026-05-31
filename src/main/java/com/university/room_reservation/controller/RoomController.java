@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/rooms")
@@ -59,7 +60,7 @@ public class RoomController {
                     @ApiResponse(responseCode = "404", description = "Room not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public RoomResponse getRoom(@PathVariable Long id) {
+    public RoomResponse getRoom(@PathVariable UUID id) {
         return RoomResponse.from(roomService.getRoom(id));
     }
 
@@ -94,7 +95,7 @@ public class RoomController {
                     @ApiResponse(responseCode = "404", description = "Room not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public RoomResponse updateRoom(@PathVariable Long id, @Valid @RequestBody UpdateRoomRequest request) {
+    public RoomResponse updateRoom(@PathVariable UUID id, @Valid @RequestBody UpdateRoomRequest request) {
         return RoomResponse.from(roomService.updateRoom(id, request));
     }
 
@@ -111,7 +112,7 @@ public class RoomController {
                     @ApiResponse(responseCode = "404", description = "Room not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public void removeRoom(@PathVariable Long id) {
+    public void removeRoom(@PathVariable UUID id) {
         roomService.removeRoom(id);
     }
 
@@ -127,7 +128,7 @@ public class RoomController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public void checkAvailability(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         roomService.getRoom(id);
@@ -150,7 +151,7 @@ public class RoomController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public AdminBlockResponse createAdminBlock(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody AdminBlockRequest request,
             Authentication authentication) {
         return AdminBlockResponse.from(
@@ -171,7 +172,7 @@ public class RoomController {
                     @ApiResponse(responseCode = "404", description = "Block not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public void deleteAdminBlock(@PathVariable Long id, @PathVariable Long blockId) {
+    public void deleteAdminBlock(@PathVariable UUID id, @PathVariable UUID blockId) {
         reservationService.deleteAdminBlock(id, blockId);
     }
 }

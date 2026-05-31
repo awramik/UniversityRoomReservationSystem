@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/users")
@@ -64,7 +65,7 @@ public class UserController {
                     @ApiResponse(responseCode = "404", description = "User not found",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
-    public UserProfileResponse getUser(@PathVariable Long id) {
+    public UserProfileResponse getUser(@PathVariable UUID id) {
         return UserProfileResponse.from(userService.getById(id));
     }
 }

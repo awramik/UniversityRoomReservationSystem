@@ -6,12 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+public interface ReservationRepository extends JpaRepository<Reservation, UUID> {
 
     boolean existsByRoomIdAndTypeAndStartTimeLessThanAndEndTimeGreaterThan(
-            Long roomId, ReservationType type, LocalDateTime end, LocalDateTime start);
+            UUID roomId, ReservationType type, LocalDateTime end, LocalDateTime start);
 
-    Optional<Reservation> findByIdAndType(Long id, ReservationType type);
+    Optional<Reservation> findByIdAndType(UUID id, ReservationType type);
 }

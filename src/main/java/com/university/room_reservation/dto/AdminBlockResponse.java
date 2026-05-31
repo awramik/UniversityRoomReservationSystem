@@ -2,10 +2,11 @@ package com.university.room_reservation.dto;
 
 import com.university.room_reservation.model.Reservation;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record AdminBlockResponse(
-        Long id,
-        Long roomId,
+        UUID id,
+        UUID roomId,
         LocalDateTime startTime,
         LocalDateTime endTime,
         String purpose

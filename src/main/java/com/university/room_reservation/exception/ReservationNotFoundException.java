@@ -1,7 +1,9 @@
 package com.university.room_reservation.exception;
 
+import java.util.UUID;
+
 public class ReservationNotFoundException extends RuntimeException {
-    public ReservationNotFoundException(Long id) {
+    public ReservationNotFoundException(UUID id) {
         super("Reservation not found: " + id);
     }
 }

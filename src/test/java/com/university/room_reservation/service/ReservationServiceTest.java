@@ -1,22 +1,28 @@
 package com.university.room_reservation.service;
 
+import com.university.room_reservation.exception.AdminBlockConflictException;
+import com.university.room_reservation.exception.ReservationConflictException;
+import com.university.room_reservation.exception.RoomNotFoundException;
+import com.university.room_reservation.model.Reservation;
+import com.university.room_reservation.model.Room;
+import com.university.room_reservation.model.ReservationType;
+import com.university.room_reservation.model.RoomType;
 import com.university.room_reservation.repository.ReservationRepository;
 import com.university.room_reservation.repository.RoomRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.university.room_reservation.model.Reservation;
-import com.university.room_reservation.model.Room;
-import com.university.room_reservation.model.RoomType;
-import java.util.List;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ReservationServiceTest {
@@ -28,45 +34,64 @@ class ReservationServiceTest {
     private ReservationRepository reservationRepository;
 
     @InjectMocks
-    private ReservationService reservationService;
+    private ReservationServiceImpl reservationService;
+
+    private final LocalDateTime start = LocalDateTime.of(2026, 5, 10, 10, 0);
+    private final LocalDateTime end   = LocalDateTime.of(2026, 5, 10, 12, 0);
 
     @Test
-    void shouldThrowExceptionWhenTryingToBookNonExistentRoom() {
-        Long nonExistentRoomId = 999L;
-        LocalDateTime start = LocalDateTime.of(2026, 5, 10, 10, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 5, 10, 12, 0);
-        String bookerName = "Jan Kowalski";
+    void shouldThrowRoomNotFoundWhenRoomDoesNotExist() {
+        UUID roomId = UUID.randomUUID();
+        when(roomRepository.findById(roomId)).thenReturn(Optional.empty());
 
-        Mockito.when(roomRepository.findById(nonExistentRoomId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> reservationService.createReservation(nonExistentRoomId, start, end, bookerName))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Room does not exist");
+        assertThatThrownBy(() -> reservationService.createReservation(roomId, start, end, "Alice", "lecture"))
+                .isInstanceOf(RoomNotFoundException.class);
     }
+
     @Test
-    void shouldThrowExceptionWhenReservationOverlaps() {
-        Long roomId = 1L;
-        LocalDateTime start = LocalDateTime.of(2026, 5, 10, 10, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 5, 10, 12, 0);
-        String bookerName = "Anna Nowak";
+    void shouldThrowReservationConflictWhenOverlappingBookingExists() {
+        UUID roomId = UUID.randomUUID();
+        Room room = new Room("Room A", 30, RoomType.LECTURE, "Building 1");
 
-        // Tworzymy salę, żeby mock mógł ją zwrócić
-        Room room = new Room("Sala 101", 30, RoomType.LECTURE);
-        room.setId(roomId);
+        when(roomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(reservationRepository.existsByRoomIdAndTypeAndStartTimeLessThanAndEndTimeGreaterThan(
+                eq(roomId), eq(ReservationType.BOOKING), any(), any()))
+                .thenReturn(true);
 
-        // Uczymy mocka 1: "Jak ktoś pyta o salę o ID 1, to ona istnieje"
-        Mockito.when(roomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        assertThatThrownBy(() -> reservationService.createReservation(roomId, start, end, "Alice", "lecture"))
+                .isInstanceOf(ReservationConflictException.class);
+    }
 
-        // Tworzymy istniejącą już rezerwację, która powoduje konflikt
-        Reservation existingReservation = new Reservation(room, start, end, "Jan Kowalski");
+    @Test
+    void shouldThrowAdminBlockConflictWhenOverlappingAdminBlockExists() {
+        UUID roomId = UUID.randomUUID();
+        Room room = new Room("Room A", 30, RoomType.LECTURE, "Building 1");
 
-        // Uczymy mocka 2: "Jeśli ktoś sprawdza, czy są rezerwacje w tym czasie, zwróć listę z istniejącą rezerwacją"
-        Mockito.when(reservationRepository.findByRoomIdAndStartTimeLessThanAndEndTimeGreaterThan(roomId, end, start))
-                .thenReturn(List.of(existingReservation));
+        when(roomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(reservationRepository.existsByRoomIdAndTypeAndStartTimeLessThanAndEndTimeGreaterThan(
+                eq(roomId), eq(ReservationType.BOOKING), any(), any()))
+                .thenReturn(false);
+        when(reservationRepository.existsByRoomIdAndTypeAndStartTimeLessThanAndEndTimeGreaterThan(
+                eq(roomId), eq(ReservationType.ADMIN_BLOCK), any(), any()))
+                .thenReturn(true);
 
-        // Oczekujemy, że system rzuci wyjątek, bo sala jest już zajęta
-        assertThatThrownBy(() -> reservationService.createReservation(roomId, start, end, bookerName))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Room is already occupied!");
+        assertThatThrownBy(() -> reservationService.createReservation(roomId, start, end, "Alice", "lecture"))
+                .isInstanceOf(AdminBlockConflictException.class);
+    }
+
+    @Test
+    void shouldCreateReservationSuccessfully() {
+        UUID roomId = UUID.randomUUID();
+        Room room = new Room("Room A", 30, RoomType.LECTURE, "Building 1");
+
+        when(roomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(reservationRepository.existsByRoomIdAndTypeAndStartTimeLessThanAndEndTimeGreaterThan(any(), any(), any(), any()))
+                .thenReturn(false);
+        Reservation saved = new Reservation(room, start, end, "Alice", ReservationType.BOOKING, "lecture");
+        when(reservationRepository.save(any())).thenReturn(saved);
+
+        Reservation result = reservationService.createReservation(roomId, start, end, "Alice", "lecture");
+
+        org.assertj.core.api.Assertions.assertThat(result.getBookerName()).isEqualTo("Alice");
     }
 }
