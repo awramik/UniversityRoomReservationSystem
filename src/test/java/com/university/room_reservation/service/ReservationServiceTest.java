@@ -7,6 +7,7 @@ import com.university.room_reservation.exception.RoomNotFoundException;
 import com.university.room_reservation.model.*;
 import com.university.room_reservation.repository.ReservationRepository;
 import com.university.room_reservation.repository.RoomRepository;
+import com.university.room_reservation.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +31,9 @@ class ReservationServiceTest {
 
     @Mock
     private ReservationRepository reservationRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private BookingLimitsProperties limits;

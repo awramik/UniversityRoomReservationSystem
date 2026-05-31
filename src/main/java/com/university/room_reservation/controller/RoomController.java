@@ -6,6 +6,7 @@ import com.university.room_reservation.dto.RoomRequest;
 import com.university.room_reservation.dto.RoomResponse;
 import com.university.room_reservation.dto.UpdateRoomRequest;
 import com.university.room_reservation.model.RoomType;
+import com.university.room_reservation.service.ReservationService;
 import com.university.room_reservation.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,9 +31,11 @@ import java.util.UUID;
 public class RoomController {
 
     private final RoomService roomService;
+    private final ReservationService reservationService;
 
-    public RoomController(RoomService roomService) {
+    public RoomController(RoomService roomService, ReservationService reservationService) {
         this.roomService = roomService;
+        this.reservationService = reservationService;
     }
 
     @GetMapping
@@ -132,6 +135,6 @@ public class RoomController {
             @PathVariable UUID id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        return roomService.checkAvailability(id, startTime, endTime);
+        return reservationService.checkAvailability(id, startTime, endTime);
     }
 }
