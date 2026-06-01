@@ -84,6 +84,10 @@ On Windows you can do it in a WSL terminal.
 
 ```bash
 ./mvnw spring-boot:run
+
+# macOS/Linux
+chmod +x mvnw
+./mvnw spring-boot:run
 ```
 
 The app starts on **http://localhost:8080**.  
