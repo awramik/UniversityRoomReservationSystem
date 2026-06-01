@@ -78,7 +78,7 @@ export default function AuthenticatedLayout({
                       Admin
                     </button>
 
-                    <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-slate-800 shadow-lg rounded-md py-2 hidden group-hover:block z-50 border border-slate-200 dark:border-slate-700">
+                    <div className="absolute left-0 mt-0 w-48 bg-white dark:bg-slate-800 shadow-lg rounded-md py-2 hidden group-hover:block z-50 border border-slate-200 dark:border-slate-700">
                       <Link
                         href="/admin/rooms"
                         className="block px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"

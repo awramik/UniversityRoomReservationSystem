@@ -20,11 +20,9 @@ export default function RoomsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Filters
   const [selectedType, setSelectedType] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState('');
   const [minCapacity, setMinCapacity] = useState('');
-
   const [uniqueBuildings, setUniqueBuildings] = useState<string[]>([]);
 
   useEffect(() => {
@@ -39,10 +37,9 @@ export default function RoomsPage() {
         if (selectedBuilding) params.append('building', selectedBuilding);
         if (minCapacity) params.append('minCapacity', minCapacity);
 
-        const endpoint =
-          `/rooms${params.toString() ? `?${params.toString()}` : ''}`;
-
+        const endpoint = `/rooms${params.toString() ? `?${params}` : ''}`;
         const data = await api.get<RoomResponse[]>(endpoint);
+
         setRooms(data || []);
 
         if (!selectedBuilding && data) {
@@ -51,7 +48,7 @@ export default function RoomsPage() {
         }
       } catch (err) {
         if (err instanceof APIError) {
-          setError(`Błąd: ${err.message}`);
+          setError(err.message);
         } else {
           setError('Błąd podczas ładowania sal');
         }
@@ -70,33 +67,35 @@ export default function RoomsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Sale
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          Przeglądaj dostępne sale i dokonaj rezerwacji
-        </p>
+    <div className="space-y-8">
+
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Dostępne sale
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            Przeglądaj, filtruj i rezerwuj sale w systemie
+          </p>
+        </div>
+
+        <div className="text-xs px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          {rooms.length} wyników
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border border-slate-200 dark:border-slate-700">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          Filtry
-        </h2>
+      {/* Filters bar */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-end">
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Room Type */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Typ sali
-            </label>
-
+          {/* Type */}
+          <div className="flex-1">
+            <label className="text-xs text-slate-500">Typ sali</label>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="">Wszystkie</option>
               <option value="LECTURE">Wykładowa</option>
@@ -107,108 +106,104 @@ export default function RoomsPage() {
           </div>
 
           {/* Building */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Budynek
-            </label>
-
+          <div className="flex-1">
+            <label className="text-xs text-slate-500">Budynek</label>
             <select
               value={selectedBuilding}
               onChange={(e) => setSelectedBuilding(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="">Wszystkie</option>
-              {uniqueBuildings.map((building) => (
-                <option key={building} value={building}>
-                  {building}
+              {uniqueBuildings.map((b) => (
+                <option key={b} value={b}>
+                  {b}
                 </option>
               ))}
             </select>
           </div>
 
           {/* Capacity */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Min. pojemność
-            </label>
-
+          <div className="flex-1">
+            <label className="text-xs text-slate-500">Min. pojemność</label>
             <input
               type="number"
               min="1"
               value={minCapacity}
               onChange={(e) => setMinCapacity(e.target.value)}
-              placeholder="Liczba miejsc"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="np. 30"
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
 
           {/* Reset */}
-          <div className="flex items-end">
-            <button
-              onClick={handleReset}
-              className="w-full bg-slate-500 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded-md transition"
-            >
-              Resetuj filtry
-            </button>
-          </div>
+          <button
+            onClick={handleReset}
+            className="h-[42px] px-4 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition"
+          >
+            Reset
+          </button>
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/40 px-4 py-3 text-red-700 dark:text-red-200">
           {error}
         </div>
       )}
 
-      {/* Loading / empty / list */}
+      {/* Loading */}
       {isLoading ? (
-        <div className="text-center text-slate-600 dark:text-slate-400 py-8">
-          Ładowanie sal...
+        <div className="grid gap-4">
+          <div className="h-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
+          <div className="h-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
+          <div className="h-24 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl" />
         </div>
       ) : rooms.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-8 text-center">
-          <p className="text-slate-600 dark:text-slate-400">
-            Nie znaleziono sal spełniających kryteria filtru
-          </p>
+        <div className="text-center py-16 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+          <p className="text-slate-500">Brak sal dla wybranych filtrów</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
           {rooms.map((room) => (
             <Link key={room.id} href={`/rooms/${room.id}`}>
-              <div className="bg-white dark:bg-slate-800 rounded-lg shadow hover:shadow-lg transition p-6 border border-slate-200 dark:border-slate-700 cursor-pointer h-full">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              <div className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 hover:shadow-lg hover:border-blue-500 transition cursor-pointer h-full flex flex-col">
+
+                <div className="flex items-start justify-between">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-500 transition">
                     {room.name}
                   </h3>
 
-                  <span className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">
-                    {ROOM_TYPES[room.roomType] || room.roomType}
+                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                    {ROOM_TYPES[room.roomType] ?? room.roomType}
                   </span>
                 </div>
 
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                  {room.buildingName}
+                <p className="text-sm text-slate-500 mt-1">
+                  📍 {room.buildingName}
                 </p>
 
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-slate-600 dark:text-slate-300">
-                    👥 {room.capacity} miejsc
-                  </span>
+                <div className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                  👥 {room.capacity} miejsc
                 </div>
 
                 {room.description && (
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">
+                  <p className="mt-3 text-sm text-slate-500 line-clamp-3">
                     {room.description}
                   </p>
                 )}
 
-                <button className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition">
-                  Szczegóły i rezerwacja →
-                </button>
+                <div className="mt-auto pt-4">
+                  <div className="text-sm text-blue-600 dark:text-blue-400 font-medium group-hover:translate-x-1 transition">
+                    Zobacz szczegóły →
+                  </div>
+                </div>
+
               </div>
             </Link>
           ))}
+
         </div>
       )}
     </div>

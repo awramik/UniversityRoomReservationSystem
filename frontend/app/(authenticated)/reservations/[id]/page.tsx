@@ -101,149 +101,189 @@ export default function ReservationDetailsPage() {
   const duration = calculateDurationHours(reservation.startTime, reservation.endTime);
 
   return (
-    <div className="space-y-6">
-      <Link href="/reservations" className="text-blue-500 hover:text-blue-600 inline-block">
-        ← Wróć do rezerwacji
-      </Link>
+  <div className="space-y-8">
 
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-8 border border-slate-200 dark:border-slate-700">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-              {reservation.room.name}
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              {reservation.room.buildingName}
-            </p>
-          </div>
-          <span className={`inline-block text-sm font-semibold px-4 py-2 rounded-full ${STATUS_COLORS[reservation.status]}`}>
-            {STATUS_NAMES[reservation.status]}
-          </span>
-        </div>
+    {/* Back */}
+    <Link
+      href="/reservations"
+      className="inline-flex items-center text-sm text-slate-500 hover:text-blue-600 transition"
+    >
+      ← Powrót do rezerwacji
+    </Link>
 
-        {/* Reservation ID */}
-        <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            <strong>ID rezerwacji:</strong> {reservation.id}
+    {/* Header */}
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            🏫 {reservation.room.name}
+          </h1>
+          <p className="text-slate-500 mt-1">
+            📍 {reservation.room.buildingName}
           </p>
         </div>
 
-        {/* Room Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-              Szczegóły sali
-            </h2>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Typ
-                </p>
-                <p className="text-slate-900 dark:text-white font-medium">
-                  {ROOM_TYPES[reservation.room.roomType] || reservation.room.roomType}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Pojemność
-                </p>
-                <p className="text-slate-900 dark:text-white font-medium">
-                  {reservation.room.capacity} osób
-                </p>
-              </div>
-              {reservation.room.description && (
-                <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                    Opis
-                  </p>
-                  <p className="text-slate-900 dark:text-white">
-                    {reservation.room.description}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+        <span
+          className={`text-xs px-3 py-1 rounded-full font-medium ${
+            STATUS_COLORS[reservation.status]
+          }`}
+        >
+          {STATUS_NAMES[reservation.status]}
+        </span>
 
-          {/* Time Details */}
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-              Szczegóły czasu
-            </h2>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Od
-                </p>
-                <p className="text-slate-900 dark:text-white font-medium">
-                  {formatDateTimeDisplay(reservation.startTime)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Do
-                </p>
-                <p className="text-slate-900 dark:text-white font-medium">
-                  {formatDateTimeDisplay(reservation.endTime)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Czas trwania
-                </p>
-                <p className="text-slate-900 dark:text-white font-medium">
-                  {duration.toFixed(1)} godzin
-                </p>
-              </div>
+      </div>
+
+      {/* meta row */}
+      <div className="mt-4 text-sm text-slate-500">
+        ID: <span className="font-mono">{reservation.id}</span>
+      </div>
+
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      {/* LEFT */}
+      <div className="lg:col-span-2 space-y-6">
+
+        {/* TIME CARD */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+
+          <h2 className="text-sm font-medium text-slate-500 mb-4">
+            Termin rezerwacji
+          </h2>
+
+          <div className="space-y-3 text-slate-900 dark:text-white">
+
+            <div className="flex justify-between">
+              <span className="text-slate-500">Start</span>
+              <span>{formatDateTimeDisplay(reservation.startTime)}</span>
             </div>
+
+            <div className="flex justify-between">
+              <span className="text-slate-500">Koniec</span>
+              <span>{formatDateTimeDisplay(reservation.endTime)}</span>
+            </div>
+
+            <div className="flex justify-between font-medium">
+              <span className="text-slate-500">Czas</span>
+              <span>{duration.toFixed(1)} h</span>
+            </div>
+
           </div>
         </div>
 
-        {/* Purpose */}
-        {reservation.purpose && (
-          <div className="mb-8 p-4 bg-slate-50 dark:bg-slate-700/50 rounded">
-            <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-              Cel rezerwacji
+        {/* ROOM DETAILS */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+
+          <h2 className="text-sm font-medium text-slate-500 mb-4">
+            Sala
+          </h2>
+
+          <div className="space-y-3">
+
+            <div className="flex justify-between">
+              <span className="text-slate-500">Typ</span>
+              <span className="text-slate-900 dark:text-white">
+                {ROOM_TYPES[reservation.room.roomType] ?? reservation.room.roomType}
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-slate-500">Pojemność</span>
+              <span className="text-slate-900 dark:text-white">
+                {reservation.room.capacity} osób
+              </span>
+            </div>
+
+          </div>
+
+          {reservation.room.description && (
+            <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
+              {reservation.room.description}
             </p>
-            <p className="text-slate-900 dark:text-white">
+          )}
+
+        </div>
+
+        {/* PURPOSE */}
+        {reservation.purpose && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+
+            <h2 className="text-sm font-medium text-slate-500 mb-3">
+              Cel rezerwacji
+            </h2>
+
+            <p className="text-slate-700 dark:text-slate-300">
               {reservation.purpose}
             </p>
+
           </div>
         )}
 
-        {/* Booker Info (for admins) */}
+        {/* BOOKER */}
         {reservation.booker && (
-          <div className="mb-8 p-4 bg-slate-50 dark:bg-slate-700/50 rounded">
-            <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-              Rezerwacja przez
-            </p>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+
+            <h2 className="text-sm font-medium text-slate-500 mb-3">
+              Rezerwujący
+            </h2>
+
             <p className="text-slate-900 dark:text-white font-medium">
-              {reservation.booker.name} {reservation.booker.surname} ({reservation.booker.username})
+              {reservation.booker.name} {reservation.booker.surname}
             </p>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {reservation.booker.email}
+
+            <p className="text-sm text-slate-500">
+              @{reservation.booker.username} • {reservation.booker.email}
             </p>
+
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex gap-4">
-          <Link href="/reservations">
-            <button className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-medium py-2 px-6 rounded transition">
-              Wróć do listy
-            </button>
-          </Link>
-
-          {reservation.status === 'ACTIVE' && (
-            <button
-              onClick={handleCancel}
-              disabled={isDeleting}
-              className="bg-red-500 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800 text-white font-medium py-2 px-6 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDeleting ? 'Anulowanie...' : 'Anuluj rezerwację'}
-            </button>
-          )}
-        </div>
       </div>
+
+      {/* RIGHT - ACTION PANEL */}
+      <div className="lg:col-span-1">
+
+        <div className="sticky top-24 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+            Akcje
+          </h2>
+
+          {error && (
+            <div className="mb-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-3">
+
+            <Link
+              href="/reservations"
+              className="block text-center w-full py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition"
+            >
+              Powrót
+            </Link>
+
+            {reservation.status === 'ACTIVE' && (
+              <button
+                onClick={handleCancel}
+                disabled={isDeleting}
+                className="w-full py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition disabled:opacity-50"
+              >
+                {isDeleting ? 'Anulowanie...' : 'Anuluj rezerwację'}
+              </button>
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
-  );
+  </div>
+);
 }
