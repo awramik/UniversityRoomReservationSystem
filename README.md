@@ -84,6 +84,10 @@ On Windows you can do it in a WSL terminal.
 
 ```bash
 ./mvnw spring-boot:run
+
+# macOS/Linux
+chmod +x mvnw
+./mvnw spring-boot:run
 ```
 
 The app starts on **http://localhost:8080**.  
@@ -115,3 +119,11 @@ All locked endpoints will now include your Bearer token automatically.
 
 > **ADMIN** can access all endpoints including user management.  
 > **STUDENT** and **LECTURER** have access to their own profile and reservation-related endpoints.
+
+### 5. Install dependencies and run frontend app
+
+```bash
+cd frontend
+pnpm i
+pnpm dev
+```

@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-backgroundPrimary);
+  margin: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.3);
+  border-radius: 6px;
+  background-clip: padding-box;
+  border: none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 100, 100, 0.5);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+@theme {
+  --color-backgroundPrimary: #F3EFE7;  /* złamana ciepła biel */
+  --color-backgroundSecondary: #E7E1D6; /* karty / surface */
+  --color-backgroundTertiary: #D8D0C2;  /* bardziej wyraźne sekcje / panele */
+
+  --color-contentPrimary: #1F2A1F;   /* główny tekst – ciemna oliwka */
+  --color-contentSecondary: #4B554B; /* mniej ważny tekst */
+  --color-contentTertiary: #7A827A;  /* placeholdery / disabled */
+  --color-contentInverted: #FFFFFF; /* tekst na ciemnym tle */
+
+  --color-borderPrimary: #CFC7B8; /* standardowe separacje */
+  --color-borderSecondary: #B8B0A1; /* karty / inputy */
+  --color-borderTertiary: #9F9687;  /* mocniejsze sekcje / active panels */
+
+  --color-accentPrimary: #5C6B4F;
+  --color-accentBase: #8C7A4F;        /* piaskowe złoto */
+  --color-accentHover: #7A6A43;   /* hover */
+  --color-accentSoft: #D6C7A3;    /* tła highlightów / tagi */
+
+  --color-success: #5C7A5A;      /* stonowana zieleń */
+  --color-successSoft: #DCE7DA;
+
+  --color-error: #8E4A4A;        /* bordo czerwone */
+  --color-errorSoft: #F0DADA;
+
+  --color-buttonColor: #5C6B4F;        /* oliwka */
+  --color-buttonColorHover: #4F5C44;
+  --color-buttonText: #F3EFE7;
+
+  --color-buttonDestructive: #8E4A4A;
+  --color-buttonDestructiveHover: #7A3F3F;
+  --color-buttonDestructiveActive: #652F2F;
+  --color-buttonDestructiveText: #F3EFE7;
+
+  --color-buttonGhost: transparent;
+  --color-buttonGhostHover: #E7E1D6;
+  --color-buttonGhostText: #4B554B;
+
+  --color-badgeOlive: #5C6B4F;   /* admin / system */
+  --color-badgeSand: #A08C5A;    /* lecture rooms */
+  --color-badgeForest: #4F6B5C;  /* laboratory */
+  --color-badgeClay: #A06B4F;    /* computer rooms */
+  --color-badgeStone: #6B6B6B;   /* student / neutral */
+
+  --color-surface: #FFFFFF;
+  --color-overlay: rgba(31, 42, 31, 0.05);
+}
+
+.custom-shadow {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+:root {
+  --background: var(--color-backgroundSecondary);
+  --foreground: var(--color-contentPrimary);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
