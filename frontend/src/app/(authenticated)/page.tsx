@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/src/app/auth/auth-context';
-import { Link } from '@/src/design-system/atoms/Link';
-import { LightCard } from '@/src/design-system/cards';
-import { H1, H2, H3 } from '@/src/design-system/typography/Heading';
-import { P2, P3 } from '@/src/design-system/typography/Paragraph';
+import { useAuth } from "@/src/app/auth/auth-context";
+import { Link } from "@/src/design-system/atoms/Link";
+import { LightCard } from "@/src/design-system/cards";
+import { H1, H2, H3 } from "@/src/design-system/typography/Heading";
+import { P2, P3 } from "@/src/design-system/typography/Paragraph";
 
-const cardClass =
-  'border-l-4 hover:shadow-lg transition cursor-pointer h-full';
+const cardClass = "border-l-4 hover:shadow-lg transition cursor-pointer h-full";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -59,7 +58,7 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {user?.role === 'ADMIN' && (
+      {user?.role === "ADMIN" && (
         <div className="mt-12 pt-8 border-t border-borderPrimary">
           <H2 className="mb-6">Panel administracyjny</H2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
