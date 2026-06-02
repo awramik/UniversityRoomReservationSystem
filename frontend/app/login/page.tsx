@@ -1,19 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/app/lib/api-client';
 import { LoginRequest, LoginResponse, APIError } from '@/app/lib/types';
 import { useAuth } from '@/app/context/auth-context';
+import { Button } from '@/design-system/atoms/Button';
+import { H1 } from '@/design-system/typography/Heading';
+import { P2, P3 } from '@/design-system/typography/Paragraph';
+import { Field, Label } from "@/design-system/forms/Fieldset";
+import { LightCard } from "@/design-system/cards";
+import { Input } from "@/design-system/forms/Input";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { refreshUser, user, isLoading: authLoading } = useAuth();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/rooms');
+    }
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,65 +59,54 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-100 via-slate-50 to-slate-200 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4">
-      <div className="w-full max-w-md">
-        
-        {/* Card */}
-        <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl border border-slate-200/60 dark:border-slate-800 p-8">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-md space-y-4">        
+        <LightCard className='space-y-6'>
           
-          {/* Header */}
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-              Room Reservation
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+          <header className="text-center space-y-2">
+            <H1>Rezerwacja Sal</H1>
+            <P2 className="text-sm text-contentSecondary">
               Zaloguj się, aby zarządzać rezerwacjami sal
-            </p>
-          </div>
+            </P2>
+          </header>
 
-          {/* Error */}
+          {/* TODO: fix unexpected error message */}
           {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+            <div className="mb-6 rounded-lg border border-error bg-errorSoft px-4 py-3 text-sm text-red-800">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            
-            {/* Username */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <form onSubmit={handleSubmit} className="space-y-5">            
+            <Field>
+              <Label>
                 Username
-              </label>
-              <input
+              </Label>
+              <Input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="np. admin"
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                placeholder="student"
                 required
               />
-            </div>
+            </Field>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <Field>
+              <Label>
                 Password
-              </label>
-              <input
+              </Label>
+              <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                 required
               />
-            </div>
+            </Field>
 
-            {/* Button */}
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-2.5 transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -115,14 +116,13 @@ export default function LoginPage() {
               ) : (
                 'Zaloguj się'
               )}
-            </button>
+            </Button>
           </form>
-        </div>
+        </LightCard>
 
-        {/* Footer hint */}
-        <p className="text-center text-xs text-slate-500 mt-6">
+        <P3 className="text-center text-contentTertiary">
           System rezerwacji sal uniwersyteckich
-        </p>
+        </P3>
       </div>
     </div>
   );
