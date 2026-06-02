@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/src/app/lib/api-client';
 import { UserProfileResponse, APIError } from '@/src/app/lib/types';
 import { useAuth } from '@/src/app/auth/auth-context';
@@ -31,17 +31,9 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'role'>('name');
+  const didFetch = useRef(false);
 
-  useEffect(() => {
-    if (user?.role !== 'ADMIN') {
-      window.location.href = '/';
-      return;
-    }
-
-    loadUsers();
-  }, [user]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -57,15 +49,29 @@ export default function AdminUsersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.role !== 'ADMIN') {
+      window.location.replace('/');
+      return;
+    }
+
+    if (didFetch.current) return;
+    didFetch.current = true;
+
+    loadUsers();
+  }, [user?.role, loadUsers]);
 
   const sortedUsers = [...users].sort((a, b) => {
     if (sortBy === 'name') {
-      return `${a.name} ${a.surname}`.localeCompare(
-        `${b.name} ${b.surname}`
+      return `${a.name ?? ''} ${a.surname ?? ''}`.localeCompare(
+        `${b.name ?? ''} ${b.surname ?? ''}`
       );
     }
-    return a.role.localeCompare(b.role);
+    return (a.role ?? '').localeCompare(b.role ?? '');
   });
 
   return (
@@ -124,9 +130,9 @@ export default function AdminUsersPage() {
       {!isLoading && users.length > 0 && (
         <LightCard className="!p-0 overflow-hidden">
           <div className="divide-y divide-borderPrimary">
-            {sortedUsers.map((u) => (
+            {sortedUsers.map((u, index) => (
               <div
-                key={u.id}
+                key={u.id ?? index}
                 className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:bg-backgroundSecondary transition"
               >
                 <div>
@@ -141,11 +147,11 @@ export default function AdminUsersPage() {
 
                 <span
                   className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                    ROLE_COLORS[u.role] ||
+                    (u.role && ROLE_COLORS[u.role]) ||
                     'bg-backgroundTertiary text-contentSecondary'
                   }`}
                 >
-                  {ROLE_NAMES[u.role] || u.role}
+                  {(u.role && ROLE_NAMES[u.role]) || u.role || '—'}
                 </span>
               </div>
             ))}

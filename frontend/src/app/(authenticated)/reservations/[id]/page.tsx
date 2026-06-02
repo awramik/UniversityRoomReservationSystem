@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/src/app/lib/api-client';
-import { ReservationDetailResponse, APIError } from '@/src/app/lib/types';
+import {
+  ReservationDetailResponse,
+  APIError,
+  RESERVATION_STATUS,
+  ReservationStatus,
+  ROOM_TYPES,
+  RoomType,
+} from '@/src/app/lib/types';
 import { formatDateTimeDisplay, calculateDurationHours } from '@/src/app/lib/date-utils';
 import { Link } from '@/src/design-system/atoms/Link';
 import { Button } from '@/src/design-system/atoms/Button';
@@ -11,24 +18,20 @@ import { LightCard } from '@/src/design-system/cards';
 import { H1, H2 } from '@/src/design-system/typography/Heading';
 import { P2, P3 } from '@/src/design-system/typography/Paragraph';
 
-const STATUS_COLORS: { [key: string]: string } = {
+const STATUS_COLORS: Record<ReservationStatus, string> = {
   ACTIVE: 'bg-successSoft text-success',
   PAST: 'bg-backgroundTertiary text-contentSecondary',
   CANCELLED: 'bg-errorSoft text-error',
 };
 
-const STATUS_NAMES: { [key: string]: string } = {
-  ACTIVE: 'Aktywna',
-  PAST: 'Przeszła',
-  CANCELLED: 'Anulowana',
-};
-
-const ROOM_TYPES: { [key: string]: string } = {
-  LECTURE: 'Wykładowa',
-  LABORATORY: 'Laboratoryjna',
-  COMPUTER: 'Komputerowa',
-  CONFERENCE: 'Konferencyjna',
-};
+function toReservationStatus(
+  status: ReservationDetailResponse['status']
+): ReservationStatus | null {
+  if (status === 'ACTIVE' || status === 'PAST' || status === 'CANCELLED') {
+    return status;
+  }
+  return null;
+}
 
 export default function ReservationDetailsPage() {
   const params = useParams();
@@ -102,7 +105,12 @@ export default function ReservationDetailsPage() {
     );
   }
 
-  const duration = calculateDurationHours(reservation.startTime, reservation.endTime);
+  const status = toReservationStatus(reservation.status);
+  const room = reservation.room;
+  const duration =
+    reservation.startTime && reservation.endTime
+      ? calculateDurationHours(reservation.startTime, reservation.endTime)
+      : null;
 
   return (
     <div className="space-y-8">
@@ -116,19 +124,19 @@ export default function ReservationDetailsPage() {
       <LightCard>
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
-            <H1>{reservation.room.name}</H1>
+            <H1>{room?.name ?? '—'}</H1>
             <P3 className="text-contentSecondary mt-1">
-              {reservation.room.buildingName}
+              {room?.buildingName ?? '—'}
             </P3>
           </div>
 
-          <span
-            className={`text-xs px-3 py-1 rounded-full font-medium h-fit ${
-              STATUS_COLORS[reservation.status]
-            }`}
-          >
-            {STATUS_NAMES[reservation.status]}
-          </span>
+          {status && (
+            <span
+              className={`text-xs px-3 py-1 rounded-full font-medium h-fit ${STATUS_COLORS[status]}`}
+            >
+              {RESERVATION_STATUS[status]}
+            </span>
+          )}
         </div>
 
         <P3 className="mt-4 text-contentTertiary">
@@ -146,48 +154,62 @@ export default function ReservationDetailsPage() {
             <div className="space-y-3 text-contentPrimary">
               <div className="flex justify-between">
                 <span className="text-contentSecondary">Start</span>
-                <span>{formatDateTimeDisplay(reservation.startTime)}</span>
+                <span>
+                  {reservation.startTime
+                    ? formatDateTimeDisplay(reservation.startTime)
+                    : '—'}
+                </span>
               </div>
 
               <div className="flex justify-between">
                 <span className="text-contentSecondary">Koniec</span>
-                <span>{formatDateTimeDisplay(reservation.endTime)}</span>
-              </div>
-
-              <div className="flex justify-between font-medium">
-                <span className="text-contentSecondary">Czas</span>
-                <span>{duration.toFixed(1)} h</span>
-              </div>
-            </div>
-          </LightCard>
-
-          <LightCard>
-            <H2 className="text-sm font-medium text-contentSecondary mb-4">
-              Sala
-            </H2>
-
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-contentSecondary">Typ</span>
-                <span className="text-contentPrimary">
-                  {ROOM_TYPES[reservation.room.roomType] ?? reservation.room.roomType}
+                <span>
+                  {reservation.endTime
+                    ? formatDateTimeDisplay(reservation.endTime)
+                    : '—'}
                 </span>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-contentSecondary">Pojemność</span>
-                <span className="text-contentPrimary">
-                  {reservation.room.capacity} osób
-                </span>
-              </div>
+              {duration !== null && (
+                <div className="flex justify-between font-medium">
+                  <span className="text-contentSecondary">Czas</span>
+                  <span>{duration.toFixed(1)} h</span>
+                </div>
+              )}
             </div>
-
-            {reservation.room.description && (
-              <P3 className="mt-4 text-contentSecondary">
-                {reservation.room.description}
-              </P3>
-            )}
           </LightCard>
+
+          {room && (
+            <LightCard>
+              <H2 className="text-sm font-medium text-contentSecondary mb-4">
+                Sala
+              </H2>
+
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-contentSecondary">Typ</span>
+                  <span className="text-contentPrimary">
+                    {room.roomType && room.roomType in ROOM_TYPES
+                      ? ROOM_TYPES[room.roomType as RoomType]
+                      : room.roomType ?? '—'}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-contentSecondary">Pojemność</span>
+                  <span className="text-contentPrimary">
+                    {room.capacity ?? '—'} osób
+                  </span>
+                </div>
+              </div>
+
+              {room.description && (
+                <P3 className="mt-4 text-contentSecondary">
+                  {room.description}
+                </P3>
+              )}
+            </LightCard>
+          )}
 
           {reservation.purpose && (
             <LightCard>
@@ -232,7 +254,7 @@ export default function ReservationDetailsPage() {
                 Powrót
               </Button>
 
-              {reservation.status === 'ACTIVE' && (
+              {status === 'ACTIVE' && (
                 <Button
                   destructive
                   onClick={handleCancel}

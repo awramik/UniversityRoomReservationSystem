@@ -119,3 +119,11 @@ All locked endpoints will now include your Bearer token automatically.
 
 > **ADMIN** can access all endpoints including user management.  
 > **STUDENT** and **LECTURER** have access to their own profile and reservation-related endpoints.
+
+### 5. Install dependencies and run frontend app
+
+```bash
+cd frontend
+pnpm i
+pnpm dev
+```

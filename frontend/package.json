@@ -7,7 +7,16 @@
     "build": "next build",
     "start": "next start -p 4000",
     "lint": "eslint",
-    "api:gen": "openapi-typescript http://localhost:8080/v3/api-docs -o src/api/schema.ts"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "api:gen": "openapi-typescript http://localhost:8080/v3/api-docs -o src/api/schema.ts",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
@@ -27,6 +36,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
     "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
