@@ -1,19 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/src/app/lib/api-client';
 import { RoomResponse, RoomRequest, UpdateRoomRequest, APIError } from '@/src/app/lib/types';
-import { useAuth } from '@/src/app/context/auth-context';
-import Link from 'next/link';
+import { useAuth } from '@/src/app/auth/auth-context';
+import { Button } from '@/src/design-system/atoms/Button';
+import { LightCard } from '@/src/design-system/cards';
+import { H1, H2 } from '@/src/design-system/typography/Heading';
+import { P2 } from '@/src/design-system/typography/Paragraph';
+import { Input } from '@/src/design-system/forms/Input';
+import { ROOM_TYPES, RoomType } from '@/src/app/lib/types';
 
-const ROOM_TYPES: { [key: string]: string } = {
-  LECTURE: 'Wykładowa',
-  LABORATORY: 'Laboratoryjna',
-  COMPUTER: 'Komputerowa',
-  CONFERENCE: 'Konferencyjna',
-};
+const fieldClass =
+  'w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:outline-none focus:ring-2 focus:ring-accentPrimary';
 
-const ROOM_TYPE_OPTIONS = ['LECTURE', 'LABORATORY', 'COMPUTER', 'CONFERENCE'];
+const ROOM_TYPE_OPTIONS = Object.keys(ROOM_TYPES) as RoomType[];
+
+function toRoomType(value: string | undefined): RoomType {
+  if (value && value in ROOM_TYPES) return value as RoomType;
+  return 'LECTURE';
+}
 
 export default function AdminRoomsPage() {
   const { user } = useAuth();
@@ -21,7 +27,6 @@ export default function AdminRoomsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Form state
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<RoomRequest>({
@@ -34,16 +39,9 @@ export default function AdminRoomsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
-  useEffect(() => {
-    if (user?.role !== 'ADMIN') {
-      // Redirect non-admins
-      window.location.href = '/';
-    } else {
-      loadRooms();
-    }
-  }, [user]);
+  const didFetch = useRef(false);
 
-  const loadRooms = async () => {
+  const loadRooms = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -56,13 +54,34 @@ export default function AdminRoomsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.role !== 'ADMIN') {
+      window.location.replace('/');
+      return;
+    }
+
+    // 🔥 blokada cascading renders
+    if (didFetch.current) return;
+    didFetch.current = true;
+
+    loadRooms();
+  }, [user?.role, loadRooms]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'capacity' ? parseInt(value) || 1 : value,
+      [name]:
+        name === 'capacity'
+          ? parseInt(value) || 1
+          : name === 'roomType'
+            ? toRoomType(value)
+            : value,
     }));
   };
 
@@ -73,7 +92,6 @@ export default function AdminRoomsPage() {
 
     try {
       if (editingId) {
-        // Update existing room
         const updateData: UpdateRoomRequest = {
           name: formData.name || undefined,
           buildingName: formData.buildingName || undefined,
@@ -82,12 +100,10 @@ export default function AdminRoomsPage() {
         };
         await api.patch(`/rooms/${editingId}`, updateData);
       } else {
-        // Create new room
         await api.post('/rooms', formData);
       }
 
-      // Reload rooms
-      loadRooms();
+      await loadRooms();
       handleFormClose();
     } catch (err) {
       if (err instanceof APIError) {
@@ -99,14 +115,17 @@ export default function AdminRoomsPage() {
   };
 
   const handleEdit = (room: RoomResponse) => {
+    if (!room.id) return;
+
     setEditingId(room.id);
     setFormData({
-      name: room.name,
-      buildingName: room.buildingName,
-      capacity: room.capacity,
-      roomType: room.roomType,
-      description: room.description || '',
+      name: room.name ?? '',
+      buildingName: room.buildingName ?? '',
+      capacity: room.capacity ?? 1,
+      roomType: toRoomType(room.roomType),
+      description: room.description ?? '',
     });
+
     setShowForm(true);
   };
 
@@ -115,7 +134,7 @@ export default function AdminRoomsPage() {
 
     try {
       await api.delete(`/rooms/${roomId}`);
-      loadRooms();
+      await loadRooms();
     } catch (err) {
       if (err instanceof APIError) {
         setError(err.message || 'Błąd podczas usuwania sali');
@@ -137,208 +156,134 @@ export default function AdminRoomsPage() {
   };
 
   return (
-  <div className="space-y-8">
+    <div className="space-y-8">
 
-    {/* Header */}
-    <div className="flex items-end justify-between">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Zarządzanie salami
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Twórz i edytuj sale w systemie
-        </p>
-      </div>
-
-      {!showForm && (
-        <button
-          onClick={() => setShowForm(true)}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition"
-        >
-          + Nowa sala
-        </button>
-      )}
-    </div>
-
-    {/* ERROR */}
-    {error && (
-      <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3">
-        {error}
-      </div>
-    )}
-
-    {/* FORM (more modal-like) */}
-    {showForm && (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-            {editingId ? 'Edytuj salę' : 'Nowa sala'}
-          </h2>
-
-          <button
-            onClick={handleFormClose}
-            className="text-sm text-slate-500 hover:text-red-500"
-          >
-            Zamknij
-          </button>
+      <div className="flex items-end justify-between">
+        <div>
+          <H1>Zarządzanie salami</H1>
+          <P2 className="text-contentSecondary mt-1">
+            Twórz i edytuj sale w systemie
+          </P2>
         </div>
 
-        {formError && (
-          <div className="mb-4 text-sm bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-3 rounded-lg">
-            {formError}
-          </div>
+        {!showForm && (
+          <Button onClick={() => setShowForm(true)}>+ Nowa sala</Button>
         )}
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
+        <div className="rounded-xl border border-error bg-errorSoft text-error px-4 py-3">
+          {error}
+        </div>
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            <input
-              name="name"
-              value={formData.name}
-              onChange={handleFormChange}
-              placeholder="Nazwa sali"
-              className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500"
-            />
-
-            <input
-              name="buildingName"
-              value={formData.buildingName}
-              onChange={handleFormChange}
-              placeholder="Budynek"
-              className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500"
-            />
-
-            <input
-              type="number"
-              name="capacity"
-              value={formData.capacity}
-              onChange={handleFormChange}
-              className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500"
-            />
-
-            <select
-              name="roomType"
-              value={formData.roomType}
-              onChange={handleFormChange}
-              className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500"
-            >
-              {ROOM_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {ROOM_TYPES[t]}
-                </option>
-              ))}
-            </select>
-
-          </div>
-
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleFormChange}
-            rows={3}
-            placeholder="Opis (opcjonalnie)"
-            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500"
-          />
-
-          <div className="flex justify-end gap-2">
+      {showForm && (
+        <LightCard>
+          <div className="flex items-center justify-between mb-6">
+            <H2>{editingId ? 'Edytuj salę' : 'Nowa sala'}</H2>
 
             <button
               type="button"
               onClick={handleFormClose}
-              className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition"
+              className="text-sm text-contentSecondary hover:text-error"
             >
-              Anuluj
+              Zamknij
             </button>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50"
-            >
-              {isSubmitting ? 'Zapisywanie...' : 'Zapisz'}
-            </button>
-
           </div>
 
-        </form>
+          {formError && (
+            <div className="mb-4 text-sm border border-error bg-errorSoft text-error p-3 rounded-lg">
+              {formError}
+            </div>
+          )}
 
-      </div>
-    )}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input name="name" value={formData.name} onChange={handleFormChange} placeholder="Nazwa sali" />
+              <Input name="buildingName" value={formData.buildingName} onChange={handleFormChange} placeholder="Budynek" />
+              <Input type="number" name="capacity" value={formData.capacity} onChange={handleFormChange} />
 
-    {/* TABLE */}
-    {!showForm && (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-
-        <table className="w-full text-sm">
-
-          <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500">
-            <tr>
-              <th className="text-left p-4">Nazwa</th>
-              <th className="text-left p-4">Budynek</th>
-              <th className="text-left p-4">Pojemność</th>
-              <th className="text-left p-4">Typ</th>
-              <th className="text-right p-4">Akcje</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {rooms.map((room) => (
-              <tr
-                key={room.id}
-                className="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              <select
+                name="roomType"
+                value={formData.roomType}
+                onChange={handleFormChange}
+                className={fieldClass}
               >
+                {ROOM_TYPE_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {ROOM_TYPES[t]}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-                <td className="p-4 font-medium text-slate-900 dark:text-white">
-                  {room.name}
-                </td>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleFormChange}
+              rows={3}
+              placeholder="Opis (opcjonalnie)"
+              className={fieldClass}
+            />
 
-                <td className="p-4 text-slate-500">
-                  {room.buildingName}
-                </td>
+            <div className="flex justify-end gap-2">
+              <Button type="button" outline onClick={handleFormClose}>
+                Anuluj
+              </Button>
 
-                <td className="p-4 text-slate-500">
-                  {room.capacity}
-                </td>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Zapisywanie...' : 'Zapisz'}
+              </Button>
+            </div>
+          </form>
+        </LightCard>
+      )}
 
-                <td className="p-4 text-slate-500">
-                  {ROOM_TYPES[room.roomType]}
-                </td>
-
-                <td className="p-4 text-right">
-
-                  <div className="flex justify-end gap-3">
-
-                    <button
-                      onClick={() => handleEdit(room)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Edytuj
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(room.id)}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Usuń
-                    </button>
-
-                  </div>
-
-                </td>
-
+      {!showForm && (
+        <LightCard className="p-0! overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-backgroundSecondary text-contentSecondary">
+              <tr>
+                <th className="text-left p-4">Nazwa</th>
+                <th className="text-left p-4">Budynek</th>
+                <th className="text-left p-4">Pojemność</th>
+                <th className="text-left p-4">Typ</th>
+                <th className="text-right p-4">Akcje</th>
               </tr>
-            ))}
+            </thead>
 
-          </tbody>
+            <tbody>
+              {rooms.map((room, index) => (
+                <tr key={room.id ?? index} className="border-t border-borderPrimary hover:bg-backgroundSecondary transition">
+                  <td className="p-4 font-medium text-contentPrimary">{room.name}</td>
+                  <td className="p-4 text-contentSecondary">{room.buildingName}</td>
+                  <td className="p-4 text-contentSecondary">{room.capacity}</td>
+                  <td className="p-4 text-contentSecondary">
+                    {room.roomType && room.roomType in ROOM_TYPES
+                      ? ROOM_TYPES[toRoomType(room.roomType)]
+                      : '—'}
+                  </td>
 
-        </table>
+                  <td className="p-4 text-right">
+                    <div className="flex justify-end gap-3">
+                      <button onClick={() => handleEdit(room)} className="text-accentBase hover:text-accentHover font-medium">
+                        Edytuj
+                      </button>
 
-      </div>
-    )}
-
-  </div>
-);
+                      <button
+                        onClick={() => room.id && handleDelete(room.id)}
+                        className="text-error hover:opacity-80 font-medium"
+                      >
+                        Usuń
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </LightCard>
+      )}
+    </div>
+  );
 }

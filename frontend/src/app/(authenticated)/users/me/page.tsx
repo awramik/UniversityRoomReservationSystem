@@ -7,9 +7,13 @@ import {
   UpdateUserProfileRequest,
   APIError,
 } from '@/src/app/lib/types';
-import { useAuth } from '@/src/app/context/auth-context';
-import { Link } from '@/src/design-system/atoms/Link';
+import { useAuth } from '@/src/app/auth/auth-context';
+import { Button } from '@/src/design-system/atoms/Button';
 import { LightCard } from '@/src/design-system/cards';
+import { H1 } from '@/src/design-system/typography/Heading';
+import { P2, P3 } from '@/src/design-system/typography/Paragraph';
+import { Field, Label } from '@/src/design-system/forms/Fieldset';
+import { Input } from '@/src/design-system/forms/Input';
 
 export default function UserProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -64,9 +68,7 @@ export default function UserProfilePage() {
         });
       }
 
-await refreshUser();
-
-      // update auth context
+      await refreshUser();
       await refreshUser();
 
       setSuccess('Profil został zaktualizowany');
@@ -88,36 +90,30 @@ await refreshUser();
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Mój profil
-        </h1>
-
-        <p className="text-slate-600 dark:text-slate-400">
+        <H1>Mój profil</H1>
+        <P2 className="text-contentSecondary">
           Edytuj swoje dane profilowe
-        </p>
+        </P2>
       </div>
 
       <div className="max-w-2xl">
         <LightCard>
-          {/* User info */}
-          <div className="mb-8 p-4 rounded">
+          <div className="mb-8 p-4 rounded-lg bg-backgroundSecondary">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                <P3 className="text-contentTertiary uppercase tracking-wide">
                   Nazwa użytkownika
-                </p>
-
-                <p className="text-slate-900 dark:text-white font-medium">
+                </P3>
+                <p className="text-contentPrimary font-medium">
                   {user.username}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                <P3 className="text-contentTertiary uppercase tracking-wide">
                   Rola
-                </p>
-
-                <p className="text-slate-900 dark:text-white font-medium">
+                </P3>
+                <p className="text-contentPrimary font-medium">
                   {user.role === 'ADMIN'
                     ? 'Administrator'
                     : user.role === 'LECTURER'
@@ -128,30 +124,22 @@ await refreshUser();
             </div>
           </div>
 
-          {/* Messages */}
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-6">
+            <div className="border border-error bg-errorSoft text-error px-4 py-3 rounded-lg mb-6">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-200 px-4 py-3 rounded mb-6">
+            <div className="border border-success bg-successSoft text-success px-4 py-3 rounded-lg mb-6">
               ✓ {success}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Imię
-              </label>
-
-              <input
+            <Field>
+              <Label htmlFor="name">Imię</Label>
+              <Input
                 type="text"
                 id="name"
                 name="name"
@@ -159,19 +147,12 @@ await refreshUser();
                 onChange={handleChange}
                 placeholder="Wpisz imię"
                 disabled={isLoading}
-                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label
-                htmlFor="surname"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Nazwisko
-              </label>
-
-              <input
+            <Field>
+              <Label htmlFor="surname">Nazwisko</Label>
+              <Input
                 type="text"
                 id="surname"
                 name="surname"
@@ -179,19 +160,12 @@ await refreshUser();
                 onChange={handleChange}
                 placeholder="Wpisz nazwisko"
                 disabled={isLoading}
-                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Email
-              </label>
-
-              <input
+            <Field>
+              <Label htmlFor="email">Email</Label>
+              <Input
                 type="email"
                 id="email"
                 name="email"
@@ -199,27 +173,17 @@ await refreshUser();
                 onChange={handleChange}
                 placeholder="Wpisz email"
                 disabled={isLoading}
-                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
+            </Field>
 
             <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <Button type="submit" disabled={isLoading} className="flex-1">
                 {isLoading ? 'Aktualizowanie...' : 'Zapisz zmiany'}
-              </button>
+              </Button>
 
-              <Link href="/" className="flex-1">
-                <button
-                  type="button"
-                  className="w-full text-center bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-medium py-2 px-4 rounded-md transition"
-                >
-                  Anuluj
-                </button>
-              </Link>
+              <Button outline href="/" className="flex-1">
+                Anuluj
+              </Button>
             </div>
           </form>
         </LightCard>

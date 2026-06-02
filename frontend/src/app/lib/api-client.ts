@@ -1,15 +1,11 @@
 import { APIError, ErrorResponse } from './types';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export interface FetchOptions extends RequestInit {
   skipErrorHandling?: boolean;
 }
 
-// -----------------------
-// type guard
-// -----------------------
 function isErrorResponse(obj: unknown): obj is ErrorResponse {
   return (
     typeof obj === 'object' &&
@@ -55,7 +51,7 @@ async function handleResponse<T>(response: Response): Promise<T | null> {
 
   throw new APIError(
     response.status,
-    message,
+    message ?? 'Unknown error',
     isErrorResponse(errorData) ? errorData : undefined
   );
 }
@@ -91,10 +87,6 @@ export async function apiCall<T>(
     throw new APIError(500, 'Network error', undefined);
   }
 }
-
-// =======================
-// CONVENIENCE METHODS
-// =======================
 
 export const api = {
   get: <T>(endpoint: string, options?: FetchOptions) =>

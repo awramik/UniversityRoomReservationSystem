@@ -1,7 +1,7 @@
 'use client';
 
 import { Link } from '@/src/design-system/atoms/Link';
-import { useAuth } from '@/src/app/context/auth-context';
+import { useAuth } from '@/src/app/auth/auth-context';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -17,7 +17,7 @@ export function Navbar() {
 
           {/* Logo */}
           <Link
-            href="/rooms"
+            href="/"
             className="font-bold text-xl text-contentPrimary"
           >
             Rezerwacja Sal

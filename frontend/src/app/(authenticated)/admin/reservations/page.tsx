@@ -1,39 +1,63 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '@/src/app/lib/api-client';
-import { ReservationResponse, RoomResponse, AdminBlockRequest, APIError } from '@/src/app/lib/types';
-import { formatDateTimeDisplay, parseDateTimeFromInput, getCurrentDateTimeISO } from '@/src/app/lib/date-utils';
-import { useAuth } from '@/src/app/context/auth-context';
-import Link from 'next/link';
+import {
+  ReservationResponse,
+  RoomResponse,
+  AdminBlockRequest,
+  APIError,
+} from '@/src/app/lib/types';
+import {
+  formatDateTimeDisplay,
+  formatDateTimeForAPI,
+  parseDateTimeFromInput,
+} from '@/src/app/lib/date-utils';
+import { useAuth } from '@/src/app/auth/auth-context';
+import { Link } from '@/src/design-system/atoms/Link';
+import { Button } from '@/src/design-system/atoms/Button';
+import { LightCard } from '@/src/design-system/cards';
+import { H1, H2 } from '@/src/design-system/typography/Heading';
+import { P2 } from '@/src/design-system/typography/Paragraph';
+import { Label, Field } from '@/src/design-system/forms/Fieldset';
+import { Input } from '@/src/design-system/forms/Input';
+import {
+  RESERVATION_STATUS,
+  ReservationStatus,
+  ROOM_TYPES,
+  RoomType,
+} from '@/src/app/lib/types';
 
-const STATUS_COLORS: { [key: string]: string } = {
-  ACTIVE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
-  PAST: 'bg-slate-100 dark:bg-slate-900/30 text-slate-800 dark:text-slate-300',
-  CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+const STATUS_COLORS: Record<ReservationStatus, string> = {
+  ACTIVE: 'bg-successSoft text-success',
+  PAST: 'bg-backgroundTertiary text-contentSecondary',
+  CANCELLED: 'bg-errorSoft text-error',
 };
 
-const STATUS_NAMES: { [key: string]: string } = {
-  ACTIVE: 'Aktywna',
-  PAST: 'Przeszła',
-  CANCELLED: 'Anulowana',
-};
+function toReservationStatus(
+  status: ReservationResponse['status']
+): ReservationStatus | null {
+  if (
+    status === 'ACTIVE' ||
+    status === 'PAST' ||
+    status === 'CANCELLED'
+  ) {
+    return status;
+  }
+  return null;
+}
 
-const ROOM_TYPES: { [key: string]: string } = {
-  LECTURE: 'Wykładowa',
-  LABORATORY: 'Laboratoryjna',
-  COMPUTER: 'Komputerowa',
-  CONFERENCE: 'Konferencyjna',
-};
+const fieldClass =
+  'w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:outline-none focus:ring-2 focus:ring-accentPrimary';
 
 export default function AdminReservationsPage() {
   const { user } = useAuth();
+
   const [reservations, setReservations] = useState<ReservationResponse[]>([]);
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Block form state
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [blockFormData, setBlockFormData] = useState({
     roomId: '',
@@ -45,26 +69,25 @@ export default function AdminReservationsPage() {
   const [blockFormError, setBlockFormError] = useState('');
   const [blockSuccess, setBlockSuccess] = useState('');
 
-  // Filter state
-  const [filterStatus, setFilterStatus] = useState<'ACTIVE' | 'PAST' | 'CANCELLED' | 'ALL'>('ACTIVE');
+  const [filterStatus, setFilterStatus] = useState<
+    'ACTIVE' | 'PAST' | 'CANCELLED' | 'ALL'
+  >('ACTIVE');
+
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.role !== 'ADMIN') {
-      window.location.href = '/';
-    } else {
-      loadData();
-    }
-  }, [user]);
+  // 🔥 FIX: blokada wielokrotnego fetchowania (kluczowy fix pod cascade renders)
+  const didInitRef = useRef(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
+
       const [reservationsData, roomsData] = await Promise.all([
         api.get<ReservationResponse[]>('/reservations'),
         api.get<RoomResponse[]>('/rooms'),
       ]);
+
       setReservations(reservationsData || []);
       setRooms(roomsData || []);
     } catch (err) {
@@ -74,9 +97,28 @@ export default function AdminReservationsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleBlockFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  // 🔥 FIX: brak dependency na całym user object + brak loopów
+  useEffect(() => {
+    if (!user?.role) return;
+
+    if (user.role !== 'ADMIN') {
+      window.location.replace('/');
+      return;
+    }
+
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
+    loadData();
+  }, [user?.role, loadData]);
+
+  const handleBlockFormChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value } = e.target;
     setBlockFormData((prev) => ({
       ...prev,
@@ -90,7 +132,11 @@ export default function AdminReservationsPage() {
     setIsSubmittingBlock(true);
 
     try {
-      if (!blockFormData.roomId || !blockFormData.startTime || !blockFormData.endTime) {
+      if (
+        !blockFormData.roomId ||
+        !blockFormData.startTime ||
+        !blockFormData.endTime
+      ) {
         setBlockFormError('Wypełnij wszystkie wymagane pola');
         setIsSubmittingBlock(false);
         return;
@@ -98,17 +144,26 @@ export default function AdminReservationsPage() {
 
       const blockRequest: AdminBlockRequest = {
         roomId: blockFormData.roomId,
-        startTime: parseDateTimeFromInput(blockFormData.startTime),
-        endTime: parseDateTimeFromInput(blockFormData.endTime),
+        startTime: formatDateTimeForAPI(
+          parseDateTimeFromInput(blockFormData.startTime)
+        ),
+        endTime: formatDateTimeForAPI(
+          parseDateTimeFromInput(blockFormData.endTime)
+        ),
         purpose: blockFormData.purpose || undefined,
       };
 
       await api.post('/reservations/blocks', blockRequest);
+
       setBlockSuccess('Blok został utworzony');
-      setBlockFormData({ roomId: '', startTime: '', endTime: '', purpose: '' });
+      setBlockFormData({
+        roomId: '',
+        startTime: '',
+        endTime: '',
+        purpose: '',
+      });
       setShowBlockForm(false);
-      
-      // Reload reservations
+
       loadData();
 
       setTimeout(() => setBlockSuccess(''), 3000);
@@ -146,235 +201,230 @@ export default function AdminReservationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/" className="text-blue-500 hover:text-blue-600 inline-block mb-4">
+          <Link href="/" className="text-accentBase hover:text-accentHover inline-block mb-4">
             ← Wróć
           </Link>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Wszystkie rezerwacje</h1>
-          <p className="text-slate-600 dark:text-slate-400">
+          <H1>Wszystkie rezerwacje</H1>
+          <P2 className="text-contentSecondary">
             Zarządzaj rezerwacjami i tworz bloki
-          </p>
+          </P2>
         </div>
         {!showBlockForm && (
-          <button
-            onClick={() => setShowBlockForm(true)}
-            className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-6 rounded transition"
-          >
-            + Nowy blok
-          </button>
+          <Button onClick={() => setShowBlockForm(true)}>+ Nowy blok</Button>
         )}
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
+        <div className="border border-error bg-errorSoft text-error px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
       {blockSuccess && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-200 px-4 py-3 rounded">
+        <div className="border border-success bg-successSoft text-success px-4 py-3 rounded-lg">
           ✓ {blockSuccess}
         </div>
       )}
 
       {/* Block Form */}
       {showBlockForm && (
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border border-slate-200 dark:border-slate-700">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-            Utwórz nowy blok niedostępności
-          </h2>
+        <LightCard>
+          <H2 className="mb-4">Utwórz nowy blok niedostępności</H2>
 
           {blockFormError && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+            <div className="border border-error bg-errorSoft text-error px-4 py-3 rounded-lg mb-4">
               {blockFormError}
             </div>
           )}
 
           <form onSubmit={handleBlockSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Room */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Sala *
-                </label>
+              <Field>
+                <Label className="mb-1">Sala *</Label>
                 <select
                   name="roomId"
                   value={blockFormData.roomId}
                   onChange={handleBlockFormChange}
                   required
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={fieldClass}
                   disabled={isSubmittingBlock}
                 >
                   <option value="">Wybierz salę</option>
-                  {rooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.name} ({room.buildingName}) - {ROOM_TYPES[room.roomType]}
-                    </option>
-                  ))}
+                  {rooms.map((room) =>
+                    room.id ? (
+                      <option key={room.id} value={room.id}>
+                        {room.name} ({room.buildingName})
+                        {room.roomType && room.roomType in ROOM_TYPES
+                          ? ` - ${ROOM_TYPES[room.roomType as RoomType]}`
+                          : ''}
+                      </option>
+                    ) : null
+                  )}
                 </select>
-              </div>
+              </Field>
 
-              {/* Start Time */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Od *
-                </label>
-                <input
+              <Field>
+                <Label className="mb-1">Od *</Label>
+                <Input
                   type="datetime-local"
                   name="startTime"
                   value={blockFormData.startTime}
                   onChange={handleBlockFormChange}
                   required
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={isSubmittingBlock}
                 />
-              </div>
+              </Field>
 
-              {/* End Time */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Do *
-                </label>
-                <input
+              <Field>
+                <Label className="mb-1">Do *</Label>
+                <Input
                   type="datetime-local"
                   name="endTime"
                   value={blockFormData.endTime}
                   onChange={handleBlockFormChange}
                   required
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={isSubmittingBlock}
                 />
-              </div>
+              </Field>
 
-              {/* Purpose */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Powód
-                </label>
-                <input
+              <Field>
+                <Label className="mb-1">Powód</Label>
+                <Input
                   type="text"
                   name="purpose"
                   value={blockFormData.purpose}
                   onChange={handleBlockFormChange}
                   placeholder="Np. Konserwacja, sprzątnięcie"
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={isSubmittingBlock}
                 />
-              </div>
+              </Field>
             </div>
 
             <div className="flex gap-2 justify-end">
-              <button
+              <Button
                 type="button"
+                outline
                 onClick={() => setShowBlockForm(false)}
                 disabled={isSubmittingBlock}
-                className="bg-slate-300 hover:bg-slate-400 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-medium py-2 px-4 rounded transition disabled:opacity-50"
               >
                 Anuluj
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingBlock}
-                className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded transition disabled:opacity-50"
-              >
+              </Button>
+              <Button type="submit" disabled={isSubmittingBlock}>
                 {isSubmittingBlock ? 'Tworzenie...' : 'Utwórz blok'}
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </LightCard>
       )}
 
-      {/* Filter */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 border border-slate-200 dark:border-slate-700">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Filtruj po statusie:
-        </label>
-        <div className="flex gap-2">
+      <LightCard className="!p-4">
+        <Field>
+        <Label className="mb-2">Filtruj po statusie:</Label>
+        <div className="flex flex-wrap gap-2">
           {(['ALL', 'ACTIVE', 'PAST', 'CANCELLED'] as const).map((status) => (
             <button
               key={status}
+              type="button"
               onClick={() => setFilterStatus(status)}
-              className={`px-4 py-2 rounded font-medium transition ${
+              className={`px-4 py-2 rounded-lg font-medium transition ${
                 filterStatus === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600'
+                  ? 'bg-buttonColor text-buttonText'
+                  : 'bg-backgroundTertiary text-contentPrimary hover:bg-accentSoft'
               }`}
             >
-              {status === 'ALL' ? 'Wszystkie' : STATUS_NAMES[status]}
+              {status === 'ALL' ? 'Wszystkie' : RESERVATION_STATUS[status]}
             </button>
           ))}
         </div>
-      </div>
+        </Field>
+      </LightCard>
 
-      {/* Reservations */}
       {isLoading ? (
-        <div className="text-center text-slate-600 dark:text-slate-400 py-8">
+        <div className="text-center text-contentSecondary py-8">
           Ładowanie rezerwacji...
         </div>
       ) : filteredReservations.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-8 text-center border border-slate-200 dark:border-slate-700">
-          <p className="text-slate-600 dark:text-slate-400">
+        <LightCard className="text-center">
+          <P2 className="text-contentSecondary">
             Brak rezerwacji w tym statusie
-          </p>
-        </div>
+          </P2>
+        </LightCard>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-x-auto">
+        <LightCard className="!p-0 overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-slate-700/50">
+            <thead className="bg-backgroundSecondary">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
                   Sala
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
                   Rezerwujący
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
                   Od
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
                   Do
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
                   Status
                 </th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-slate-900 dark:text-white">
+                <th className="px-6 py-3 text-center text-sm font-semibold text-contentPrimary">
                   Akcje
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {filteredReservations.map((reservation) => (
-                <tr key={reservation.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
-                  <td className="px-6 py-4 text-slate-900 dark:text-white font-medium">
+            <tbody className="divide-y divide-borderPrimary">
+              {filteredReservations.map((reservation, index) => {
+                const status = toReservationStatus(reservation.status);
+                return (
+                <tr key={reservation.id ?? index} className="hover:bg-backgroundSecondary transition">
+                  <td className="px-6 py-4 text-contentPrimary font-medium">
                     {reservation.roomName}
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                  <td className="px-6 py-4 text-contentSecondary">
                     {reservation.bookerName || '—'}
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300 text-sm">
-                    {formatDateTimeDisplay(reservation.startTime)}
+                  <td className="px-6 py-4 text-contentSecondary text-sm">
+                    {reservation.startTime
+                      ? formatDateTimeDisplay(reservation.startTime)
+                      : '—'}
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300 text-sm">
-                    {formatDateTimeDisplay(reservation.endTime)}
+                  <td className="px-6 py-4 text-contentSecondary text-sm">
+                    {reservation.endTime
+                      ? formatDateTimeDisplay(reservation.endTime)
+                      : '—'}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${STATUS_COLORS[reservation.status]}`}>
-                      {STATUS_NAMES[reservation.status]}
-                    </span>
+                    {status && (
+                      <span
+                        className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${STATUS_COLORS[status]}`}
+                      >
+                        {RESERVATION_STATUS[status]}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => handleDeleteReservation(reservation.id)}
-                      disabled={deletingId === reservation.id}
-                      className="text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
-                    >
-                      {deletingId === reservation.id ? 'Usuwanie...' : 'Usuń'}
-                    </button>
+                    {reservation.id && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          reservation.id &&
+                          handleDeleteReservation(reservation.id)
+                        }
+                        disabled={deletingId === reservation.id}
+                        className="text-error hover:opacity-80 font-medium disabled:opacity-50"
+                      >
+                        {deletingId === reservation.id ? 'Usuwanie...' : 'Usuń'}
+                      </button>
+                    )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
-        </div>
+        </LightCard>
       )}
     </div>
   );

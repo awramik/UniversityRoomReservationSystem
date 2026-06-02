@@ -46,7 +46,7 @@ export class APIError extends Error {
   }
 }
 
-type RoomType = components["schemas"]["RoomRequest"]["roomType"];
+export type RoomType = components["schemas"]["RoomRequest"]["roomType"];
 export const ROOM_TYPES: Record<RoomType, string> =
 {
   LECTURE: 'Wykładowa',
@@ -54,3 +54,15 @@ export const ROOM_TYPES: Record<RoomType, string> =
   COMPUTER: 'Komputerowa',
   CONFERENCE: 'Konferencyjna',
 };
+
+export type ReservationStatus =
+  Exclude<
+    components["schemas"]["ReservationDetailResponse"]["status"],
+    undefined | null
+  >;
+export const RESERVATION_STATUS:  Record<ReservationStatus, string> =
+{
+  ACTIVE: 'Aktywna',
+  PAST: 'Przeszła',
+  CANCELLED: 'Anulowana',
+}; 

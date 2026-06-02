@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/src/app/lib/api-client';
 import { UserProfileResponse, APIError } from '@/src/app/lib/types';
-import { useAuth } from '@/src/app/context/auth-context';
-import Link from 'next/link';
+import { useAuth } from '@/src/app/auth/auth-context';
+import { Link } from '@/src/design-system/atoms/Link';
+import { LightCard } from '@/src/design-system/cards';
+import { H1 } from '@/src/design-system/typography/Heading';
+import { P2, P3 } from '@/src/design-system/typography/Paragraph';
 
 const ROLE_NAMES: { [key: string]: string } = {
   ADMIN: 'Administrator',
@@ -13,10 +16,13 @@ const ROLE_NAMES: { [key: string]: string } = {
 };
 
 const ROLE_COLORS: { [key: string]: string } = {
-  ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  LECTURER: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  STUDENT: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  ADMIN: 'bg-errorSoft text-error',
+  LECTURER: 'bg-accentSoft text-contentPrimary',
+  STUDENT: 'bg-successSoft text-success',
 };
+
+const selectClass =
+  'px-3 py-2 border border-borderPrimary rounded-lg bg-backgroundPrimary text-contentPrimary focus:outline-none focus:ring-2 focus:ring-accentPrimary';
 
 export default function AdminUsersPage() {
   const { user } = useAuth();
@@ -64,37 +70,27 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <Link
-          href="/"
-          className="text-blue-500 hover:text-blue-600 inline-block mb-4"
-        >
+        <Link href="/" className="text-accentBase hover:text-accentHover inline-block mb-4">
           ← Wróć
         </Link>
 
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Użytkownicy
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <H1>Użytkownicy</H1>
+        <P2 className="text-contentSecondary">
           Zarządzanie kontami w systemie
-        </p>
+        </P2>
       </div>
 
-      {/* Error */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
+        <div className="border border-error bg-errorSoft text-error px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
-      {/* Controls */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <LightCard className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 !p-4">
         <div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Sortowanie
-          </p>
-          <p className="text-sm font-medium text-slate-900 dark:text-white">
+          <P3 className="text-contentSecondary">Sortowanie</P3>
+          <p className="text-sm font-medium text-contentPrimary">
             Aktualnie: {sortBy === 'name' ? 'Imię i nazwisko' : 'Rola'}
           </p>
         </div>
@@ -104,64 +100,57 @@ export default function AdminUsersPage() {
           onChange={(e) =>
             setSortBy(e.target.value as 'name' | 'role')
           }
-          className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={selectClass}
         >
           <option value="name">Imię i nazwisko</option>
           <option value="role">Rola</option>
         </select>
-      </div>
+      </LightCard>
 
-      {/* Loading */}
       {isLoading && (
-        <div className="text-center py-10 text-slate-600 dark:text-slate-400">
+        <div className="text-center py-10 text-contentSecondary">
           Ładowanie użytkowników...
         </div>
       )}
 
-      {/* Empty */}
       {!isLoading && users.length === 0 && (
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-8 text-center border border-slate-200 dark:border-slate-700">
-          <p className="text-slate-600 dark:text-slate-400">
+        <LightCard className="text-center">
+          <P2 className="text-contentSecondary">
             Brak użytkowników w systemie
-          </p>
-        </div>
+          </P2>
+        </LightCard>
       )}
 
-      {/* Users Grid (better than raw table) */}
       {!isLoading && users.length > 0 && (
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="divide-y divide-slate-200 dark:divide-slate-700">
+        <LightCard className="!p-0 overflow-hidden">
+          <div className="divide-y divide-borderPrimary">
             {sortedUsers.map((u) => (
               <div
                 key={u.id}
-                className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition"
+                className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:bg-backgroundSecondary transition"
               >
-                {/* Left */}
                 <div>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                  <p className="text-lg font-semibold text-contentPrimary">
                     {u.name} {u.surname}
                   </p>
 
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <P3 className="text-contentSecondary">
                     @{u.username} · {u.email}
-                  </p>
+                  </P3>
                 </div>
 
-                {/* Right */}
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                      ROLE_COLORS[u.role] ||
-                      'bg-slate-100 text-slate-800'
-                    }`}
-                  >
-                    {ROLE_NAMES[u.role] || u.role}
-                  </span>
-                </div>
+                <span
+                  className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                    ROLE_COLORS[u.role] ||
+                    'bg-backgroundTertiary text-contentSecondary'
+                  }`}
+                >
+                  {ROLE_NAMES[u.role] || u.role}
+                </span>
               </div>
             ))}
           </div>
-        </div>
+        </LightCard>
       )}
     </div>
   );

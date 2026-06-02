@@ -3,20 +3,11 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/src/app/lib/api-client';
 import { RoomResponse, APIError } from '@/src/app/lib/types';
-import { useAuth } from '@/src/app/context/auth-context';
 import { LightCard } from '@/src/design-system/cards';
 import { Link } from '@/src/design-system/atoms/Link';
-
-const ROOM_TYPES: { [key: string]: string } = {
-  LECTURE: 'Wykładowa',
-  LABORATORY: 'Laboratoryjna',
-  COMPUTER: 'Komputerowa',
-  CONFERENCE: 'Konferencyjna',
-};
+import { ROOM_TYPES, RoomType } from '@/src/app/lib/types';
 
 export default function RoomsPage() {
-  const { user } = useAuth();
-
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,7 +35,13 @@ export default function RoomsPage() {
         setRooms(data || []);
 
         if (!selectedBuilding && data) {
-          const buildings = [...new Set(data.map((r) => r.buildingName))].sort();
+          const buildings = [
+            ...new Set(
+              data
+                .map((r) => r.buildingName)
+                .filter((b): b is string => !!b)
+            ),
+          ].sort();
           setUniqueBuildings(buildings);
         }
       } catch (err) {
@@ -76,7 +73,6 @@ export default function RoomsPage() {
           <h1 className="text-3xl font-bold text-contentPrimary">
             Dostępne sale
           </h1>
-
           <p className="text-contentSecondary mt-1">
             Przeglądaj, filtruj i rezerwuj sale w systemie
           </p>
@@ -145,8 +141,9 @@ export default function RoomsPage() {
 
           {/* RESET */}
           <button
+            type="button"
             onClick={handleReset}
-            className="h-[42px] px-4 rounded-lg bg-buttonSecondary text-buttonSecondaryText hover:bg-backgroundTertiary transition"
+            className="h-[42px] px-4 rounded-lg border border-borderSecondary text-contentSecondary hover:bg-backgroundTertiary transition"
           >
             Reset
           </button>
@@ -186,9 +183,10 @@ export default function RoomsPage() {
                     {room.name}
                   </h3>
 
+                  {room.roomType && 
                   <span className="text-xs px-2 py-1 rounded-full bg-accentSoft text-contentPrimary">
-                    {ROOM_TYPES[room.roomType] ?? room.roomType}
-                  </span>
+                    {ROOM_TYPES[room.roomType as RoomType]}
+                  </span>}
 
                 </div>
 
