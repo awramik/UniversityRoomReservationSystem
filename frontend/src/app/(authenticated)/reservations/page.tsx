@@ -149,7 +149,7 @@ export default function ReservationsPage() {
                       destructive
                       onClick={() => r.id && handleCancel(r.id)}
                       disabled={deletingId === r.id}
-                      className="text-sm !px-3 !py-1"
+                      className="text-sm px-3! py-1!"
                     >
                       {deletingId === r.id ? 'Anulowanie...' : 'Anuluj'}
                     </Button>

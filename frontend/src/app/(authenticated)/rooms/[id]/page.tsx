@@ -26,21 +26,21 @@ export default function RoomDetailsPage() {
   const roomId = params.id as string;
 
   const [room, setRoom] = useState<RoomResponse | null>(null);
-  const [isLoadingRoom, setIsLoadingRoom] = useState(true);
-  const [roomError, setRoomError] = useState('');
+  const [isLoadingRoom, setIsLoadingRoom] = useState<boolean>(true);
+  const [roomError, setRoomError] = useState<string>('');
 
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [purpose, setPurpose] = useState('');
+  const [startTime, setStartTime] = useState<string>('');
+  const [endTime, setEndTime] = useState<string>('');
+  const [purpose, setPurpose] = useState<string>('');
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string>('');
+  const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
 
   const [availability, setAvailability] =
     useState<AvailabilityResponse | null>(null);
 
-  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState<boolean>(false);
 
   useEffect(() => {
     const run = async () => {
