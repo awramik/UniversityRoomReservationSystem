@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/src/app/lib/api-client";
 import { UserProfileResponse, APIError, USER_ROLES } from "@/src/app/lib/types";
 import { useAuth } from "@/src/app/auth/auth-context";
-import { Link } from "@/src/design-system/atoms/Link";
-import { LightCard } from "@/src/design-system/cards";
-import { H1 } from "@/src/design-system/typography/Heading";
+import { LightCard } from "@/src/design-system/cards/LightCard";
 import { P2, P3 } from "@/src/design-system/typography/Paragraph";
+import { Header } from "../../_components/Header";
+import { Table } from "@/src/design-system/cards/Table";
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-errorSoft text-error",
@@ -72,19 +72,10 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="space-y-2">
-        <Link
-          href="/"
-          className="text-accentBase hover:text-accentHover inline-block"
-        >
-          ← Wróć
-        </Link>
-
-        <H1>Użytkownicy</H1>
-        <P2 className="text-contentSecondary">
-          Zarządzanie kontami i rolami w systemie
-        </P2>
-      </div>
+      <Header
+        title="Użytkownicy"
+        details="Zarządzanie kontami i rolami w systemie"
+      />
 
       {/* ERROR */}
       {error && (
@@ -132,37 +123,51 @@ export default function AdminUsersPage() {
 
       {/* LIST */}
       {!isLoading && users.length > 0 && (
-        <LightCard className="!p-0 overflow-hidden">
-          <div className="divide-y divide-borderPrimary">
+        <Table>
+          <Table.Head>
+            <tr>
+              <Table.HeadCell>Użytkownik</Table.HeadCell>
+              <Table.HeadCell>Email</Table.HeadCell>
+              <Table.HeadCell>Rola</Table.HeadCell>
+            </tr>
+          </Table.Head>
+
+          <Table.Body>
             {sortedUsers.map((u) => (
-              <div
-                key={u.id}
-                className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-backgroundSecondary transition"
-              >
-                {/* LEFT */}
-                <div className="min-w-0">
-                  <p className="text-base font-semibold text-contentPrimary truncate">
-                    {u.name} {u.surname}
-                  </p>
+              <Table.Row key={u.id}>
+                {/* USER */}
+                <Table.Cell>
+                  <div className="min-w-0">
+                    <p className="text-base font-semibold text-contentPrimary truncate">
+                      {u.name} {u.surname}
+                    </p>
 
-                  <P3 className="text-contentSecondary truncate">
-                    @{u.username} · {u.email}
-                  </P3>
-                </div>
+                    <p className="text-sm text-contentSecondary truncate">
+                      @{u.username}
+                    </p>
+                  </div>
+                </Table.Cell>
 
-                {/* RIGHT BADGE */}
-                <span
-                  className={`shrink-0 text-xs font-semibold px-3 py-1 rounded-full ${
-                    (u.role && ROLE_COLORS[u.role]) ||
-                    "bg-backgroundTertiary text-contentSecondary"
-                  }`}
-                >
-                  {(u.role && USER_ROLES[u.role]) || u.role || "—"}
-                </span>
-              </div>
+                {/* EMAIL */}
+                <Table.Cell className="text-contentSecondary">
+                  {u.email}
+                </Table.Cell>
+
+                {/* ROLE */}
+                <Table.Cell>
+                  <span
+                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                      (u.role && ROLE_COLORS[u.role]) ||
+                      "bg-backgroundTertiary text-contentSecondary"
+                    }`}
+                  >
+                    {(u.role && USER_ROLES[u.role]) || u.role || "—"}
+                  </span>
+                </Table.Cell>
+              </Table.Row>
             ))}
-          </div>
-        </LightCard>
+          </Table.Body>
+        </Table>
       )}
     </div>
   );

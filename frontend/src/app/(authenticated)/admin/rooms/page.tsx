@@ -12,11 +12,12 @@ import {
 } from "@/src/app/lib/types";
 import { useAuth } from "@/src/app/auth/auth-context";
 import { Button } from "@/src/design-system/atoms/Button";
-import { LightCard } from "@/src/design-system/cards";
-import { H1, H2 } from "@/src/design-system/typography/Heading";
-import { P2 } from "@/src/design-system/typography/Paragraph";
+import { LightCard } from "@/src/design-system/cards/LightCard";
+import { H2 } from "@/src/design-system/typography/Heading";
 import { Input } from "@/src/design-system/forms/Input";
 import { Fieldset, Field, Label } from "@headlessui/react";
+import { Header } from "../../_components/Header";
+import { Table } from "@/src/design-system/cards/Table";
 
 const fieldClass =
   "w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:outline-none focus:ring-2 focus:ring-accentPrimary";
@@ -184,18 +185,14 @@ export default function AdminRoomsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-end justify-between">
-        <div>
-          <H1>Zarządzanie salami</H1>
-          <P2 className="text-contentSecondary mt-1">
-            Twórz i edytuj sale w systemie
-          </P2>
-        </div>
-
+      <Header
+        title="Zarządzanie salami"
+        details="Twórz i edytuj sale w systemie"
+      >
         {!showForm && (
           <Button onClick={() => setShowForm(true)}>+ Nowa sala</Button>
         )}
-      </div>
+      </Header>
 
       {error && (
         <div className="rounded-xl border border-error bg-errorSoft text-error px-4 py-3">
@@ -292,57 +289,59 @@ export default function AdminRoomsPage() {
       )}
 
       {!showForm && (
-        <LightCard className="p-0! overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-backgroundSecondary text-contentSecondary">
-              <tr>
-                <th className="text-left p-4">Nazwa</th>
-                <th className="text-left p-4">Budynek</th>
-                <th className="text-left p-4">Pojemność</th>
-                <th className="text-left p-4">Typ</th>
-                <th className="text-right p-4">Akcje</th>
-              </tr>
-            </thead>
+        <Table>
+          <Table.Head>
+            <tr>
+              <Table.HeadCell>Nazwa</Table.HeadCell>
+              <Table.HeadCell>Budynek</Table.HeadCell>
+              <Table.HeadCell>Pojemność</Table.HeadCell>
+              <Table.HeadCell>Typ</Table.HeadCell>
+              <Table.HeadCell align="right">Akcje</Table.HeadCell>
+            </tr>
+          </Table.Head>
 
-            <tbody>
-              {rooms.map((room, index) => (
-                <tr
-                  key={room.id ?? index}
-                  className="border-t border-borderPrimary hover:bg-backgroundSecondary transition"
-                >
-                  <td className="p-4 font-medium">{room.name}</td>
-                  <td className="p-4 text-contentSecondary">
-                    {room.buildingName}
-                  </td>
-                  <td className="p-4 text-contentSecondary">{room.capacity}</td>
-                  <td className="p-4 text-contentSecondary">
-                    {room.roomType && room.roomType in ROOM_TYPES
-                      ? ROOM_TYPES[toRoomType(room.roomType)]
-                      : "—"}
-                  </td>
+          <Table.Body>
+            {rooms.map((room, index) => (
+              <Table.Row key={room.id ?? index}>
+                <Table.Cell className="font-medium text-contentPrimary">
+                  {room.name}
+                </Table.Cell>
 
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => handleEdit(room)}
-                        className="text-accentBase hover:text-accentHover font-medium"
-                      >
-                        Edytuj
-                      </button>
+                <Table.Cell className="text-contentSecondary">
+                  {room.buildingName}
+                </Table.Cell>
 
-                      <button
-                        onClick={() => room.id && handleDelete(room.id)}
-                        className="text-error hover:opacity-80 font-medium"
-                      >
-                        Usuń
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </LightCard>
+                <Table.Cell className="text-contentSecondary">
+                  {room.capacity}
+                </Table.Cell>
+
+                <Table.Cell className="text-contentSecondary">
+                  {room.roomType && room.roomType in ROOM_TYPES
+                    ? ROOM_TYPES[toRoomType(room.roomType)]
+                    : "—"}
+                </Table.Cell>
+
+                <Table.Cell align="right">
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={() => handleEdit(room)}
+                      className="font-medium text-accentBase hover:text-accentHover"
+                    >
+                      Edytuj
+                    </button>
+
+                    <button
+                      onClick={() => room.id && handleDelete(room.id)}
+                      className="font-medium text-error hover:opacity-80"
+                    >
+                      Usuń
+                    </button>
+                  </div>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
       )}
     </div>
   );

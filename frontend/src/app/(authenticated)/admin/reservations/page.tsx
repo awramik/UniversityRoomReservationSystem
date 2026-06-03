@@ -1,54 +1,52 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { api } from '@/src/app/lib/api-client';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { api } from "@/src/app/lib/api-client";
 import {
   ReservationResponse,
   RoomResponse,
   AdminBlockRequest,
   APIError,
-} from '@/src/app/lib/types';
+} from "@/src/app/lib/types";
 import {
   formatDateTimeDisplay,
   formatDateTimeForAPI,
   parseDateTimeFromInput,
-} from '@/src/app/lib/date-utils';
-import { useAuth } from '@/src/app/auth/auth-context';
-import { Link } from '@/src/design-system/atoms/Link';
-import { Button } from '@/src/design-system/atoms/Button';
-import { LightCard } from '@/src/design-system/cards';
-import { H1, H2 } from '@/src/design-system/typography/Heading';
-import { P2 } from '@/src/design-system/typography/Paragraph';
-import { Label, Field } from '@/src/design-system/forms/Fieldset';
-import { Input } from '@/src/design-system/forms/Input';
+} from "@/src/app/lib/date-utils";
+import { useAuth } from "@/src/app/auth/auth-context";
+import { Button } from "@/src/design-system/atoms/Button";
+import { LightCard } from "@/src/design-system/cards/LightCard";
+import { H2 } from "@/src/design-system/typography/Heading";
+import { P2 } from "@/src/design-system/typography/Paragraph";
+import { Label, Field } from "@/src/design-system/forms/Fieldset";
+import { Input } from "@/src/design-system/forms/Input";
 import {
   RESERVATION_STATUS,
   ReservationStatus,
   ROOM_TYPES,
   RoomType,
-} from '@/src/app/lib/types';
+} from "@/src/app/lib/types";
+import { Header } from "../../_components/Header";
+import { Badge, type BadgeColor } from "@/src/design-system/atoms/Badge";
+import { Table } from "@/src/design-system/cards/Table";
 
 const STATUS_COLORS: Record<ReservationStatus, string> = {
-  ACTIVE: 'bg-successSoft text-success',
-  PAST: 'bg-backgroundTertiary text-contentSecondary',
-  CANCELLED: 'bg-errorSoft text-error',
+  ACTIVE: "lime",
+  PAST: "stone",
+  CANCELLED: "red",
 };
 
 function toReservationStatus(
-  status: ReservationResponse['status']
+  status: ReservationResponse["status"],
 ): ReservationStatus | null {
-  if (
-    status === 'ACTIVE' ||
-    status === 'PAST' ||
-    status === 'CANCELLED'
-  ) {
+  if (status === "ACTIVE" || status === "PAST" || status === "CANCELLED") {
     return status;
   }
   return null;
 }
 
 const fieldClass =
-  'w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:outline-none focus:ring-2 focus:ring-accentPrimary';
+  "w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:outline-none focus:ring-2 focus:ring-accentPrimary";
 
 export default function AdminReservationsPage() {
   const { user } = useAuth();
@@ -56,22 +54,22 @@ export default function AdminReservationsPage() {
   const [reservations, setReservations] = useState<ReservationResponse[]>([]);
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [blockFormData, setBlockFormData] = useState({
-    roomId: '',
-    startTime: '',
-    endTime: '',
-    purpose: '',
+    roomId: "",
+    startTime: "",
+    endTime: "",
+    purpose: "",
   });
   const [isSubmittingBlock, setIsSubmittingBlock] = useState(false);
-  const [blockFormError, setBlockFormError] = useState('');
-  const [blockSuccess, setBlockSuccess] = useState('');
+  const [blockFormError, setBlockFormError] = useState("");
+  const [blockSuccess, setBlockSuccess] = useState("");
 
   const [filterStatus, setFilterStatus] = useState<
-    'ACTIVE' | 'PAST' | 'CANCELLED' | 'ALL'
-  >('ACTIVE');
+    "ACTIVE" | "PAST" | "CANCELLED" | "ALL"
+  >("ACTIVE");
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -81,30 +79,29 @@ export default function AdminReservationsPage() {
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      setError('');
+      setError("");
 
       const [reservationsData, roomsData] = await Promise.all([
-        api.get<ReservationResponse[]>('/reservations'),
-        api.get<RoomResponse[]>('/rooms'),
+        api.get<ReservationResponse[]>("/reservations"),
+        api.get<RoomResponse[]>("/rooms"),
       ]);
 
       setReservations(reservationsData || []);
       setRooms(roomsData || []);
     } catch (err) {
       if (err instanceof APIError) {
-        setError(err.message || 'Błąd podczas ładowania danych');
+        setError(err.message || "Błąd podczas ładowania danych");
       }
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // 🔥 FIX: brak dependency na całym user object + brak loopów
   useEffect(() => {
     if (!user?.role) return;
 
-    if (user.role !== 'ADMIN') {
-      window.location.replace('/');
+    if (user.role !== "ADMIN") {
+      window.location.replace("/");
       return;
     }
 
@@ -117,7 +114,7 @@ export default function AdminReservationsPage() {
   const handleBlockFormChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setBlockFormData((prev) => ({
@@ -128,7 +125,7 @@ export default function AdminReservationsPage() {
 
   const handleBlockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBlockFormError('');
+    setBlockFormError("");
     setIsSubmittingBlock(true);
 
     try {
@@ -137,7 +134,7 @@ export default function AdminReservationsPage() {
         !blockFormData.startTime ||
         !blockFormData.endTime
       ) {
-        setBlockFormError('Wypełnij wszystkie wymagane pola');
+        setBlockFormError("Wypełnij wszystkie wymagane pola");
         setIsSubmittingBlock(false);
         return;
       }
@@ -145,31 +142,31 @@ export default function AdminReservationsPage() {
       const blockRequest: AdminBlockRequest = {
         roomId: blockFormData.roomId,
         startTime: formatDateTimeForAPI(
-          parseDateTimeFromInput(blockFormData.startTime)
+          parseDateTimeFromInput(blockFormData.startTime),
         ),
         endTime: formatDateTimeForAPI(
-          parseDateTimeFromInput(blockFormData.endTime)
+          parseDateTimeFromInput(blockFormData.endTime),
         ),
         purpose: blockFormData.purpose || undefined,
       };
 
-      await api.post('/reservations/blocks', blockRequest);
+      await api.post("/reservations/blocks", blockRequest);
 
-      setBlockSuccess('Blok został utworzony');
+      setBlockSuccess("Blok został utworzony");
       setBlockFormData({
-        roomId: '',
-        startTime: '',
-        endTime: '',
-        purpose: '',
+        roomId: "",
+        startTime: "",
+        endTime: "",
+        purpose: "",
       });
       setShowBlockForm(false);
 
       loadData();
 
-      setTimeout(() => setBlockSuccess(''), 3000);
+      setTimeout(() => setBlockSuccess(""), 3000);
     } catch (err) {
       if (err instanceof APIError) {
-        setBlockFormError(err.message || 'Błąd podczas tworzenia bloku');
+        setBlockFormError(err.message || "Błąd podczas tworzenia bloku");
       }
     } finally {
       setIsSubmittingBlock(false);
@@ -177,7 +174,7 @@ export default function AdminReservationsPage() {
   };
 
   const handleDeleteReservation = async (reservationId: string) => {
-    if (!confirm('Na pewno chcesz usunąć tę rezerwację?')) return;
+    if (!confirm("Na pewno chcesz usunąć tę rezerwację?")) return;
 
     try {
       setDeletingId(reservationId);
@@ -185,7 +182,7 @@ export default function AdminReservationsPage() {
       loadData();
     } catch (err) {
       if (err instanceof APIError) {
-        setError(err.message || 'Błąd podczas usuwania rezerwacji');
+        setError(err.message || "Błąd podczas usuwania rezerwacji");
       }
     } finally {
       setDeletingId(null);
@@ -193,26 +190,20 @@ export default function AdminReservationsPage() {
   };
 
   const filteredReservations =
-    filterStatus === 'ALL'
+    filterStatus === "ALL"
       ? reservations
       : reservations.filter((r) => r.status === filterStatus);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link href="/" className="text-accentBase hover:text-accentHover inline-block mb-4">
-            ← Wróć
-          </Link>
-          <H1>Wszystkie rezerwacje</H1>
-          <P2 className="text-contentSecondary">
-            Zarządzaj rezerwacjami i tworz bloki
-          </P2>
-        </div>
+      <Header
+        title="Wszystkie rezerwacje"
+        details="Zarządzaj rezerwacjami i tworz bloki administracyjne"
+      >
         {!showBlockForm && (
           <Button onClick={() => setShowBlockForm(true)}>+ Nowy blok</Button>
         )}
-      </div>
+      </Header>
 
       {error && (
         <div className="border border-error bg-errorSoft text-error px-4 py-3 rounded-lg">
@@ -222,7 +213,7 @@ export default function AdminReservationsPage() {
 
       {blockSuccess && (
         <div className="border border-success bg-successSoft text-success px-4 py-3 rounded-lg">
-          ✓ {blockSuccess}
+          {blockSuccess}
         </div>
       )}
 
@@ -256,9 +247,9 @@ export default function AdminReservationsPage() {
                         {room.name} ({room.buildingName})
                         {room.roomType && room.roomType in ROOM_TYPES
                           ? ` - ${ROOM_TYPES[room.roomType as RoomType]}`
-                          : ''}
+                          : ""}
                       </option>
-                    ) : null
+                    ) : null,
                   )}
                 </select>
               </Field>
@@ -310,7 +301,7 @@ export default function AdminReservationsPage() {
                 Anuluj
               </Button>
               <Button type="submit" disabled={isSubmittingBlock}>
-                {isSubmittingBlock ? 'Tworzenie...' : 'Utwórz blok'}
+                {isSubmittingBlock ? "Tworzenie..." : "Utwórz blok"}
               </Button>
             </div>
           </form>
@@ -319,23 +310,23 @@ export default function AdminReservationsPage() {
 
       <LightCard className="!p-4">
         <Field>
-        <Label className="mb-2">Filtruj po statusie:</Label>
-        <div className="flex flex-wrap gap-2">
-          {(['ALL', 'ACTIVE', 'PAST', 'CANCELLED'] as const).map((status) => (
-            <button
-              key={status}
-              type="button"
-              onClick={() => setFilterStatus(status)}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                filterStatus === status
-                  ? 'bg-buttonColor text-buttonText'
-                  : 'bg-backgroundTertiary text-contentPrimary hover:bg-accentSoft'
-              }`}
-            >
-              {status === 'ALL' ? 'Wszystkie' : RESERVATION_STATUS[status]}
-            </button>
-          ))}
-        </div>
+          <Label className="mb-2">Filtruj po statusie:</Label>
+          <div className="flex flex-wrap gap-2">
+            {(["ALL", "ACTIVE", "PAST", "CANCELLED"] as const).map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setFilterStatus(status)}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  filterStatus === status
+                    ? "bg-buttonColor text-buttonText"
+                    : "bg-backgroundSecondary text-contentPrimary hover:bg-backgroundTertiary"
+                }`}
+              >
+                {status === "ALL" ? "Wszystkie" : RESERVATION_STATUS[status]}
+              </button>
+            ))}
+          </div>
         </Field>
       </LightCard>
 
@@ -350,81 +341,69 @@ export default function AdminReservationsPage() {
           </P2>
         </LightCard>
       ) : (
-        <LightCard className="!p-0 overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-backgroundSecondary">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
-                  Sala
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
-                  Rezerwujący
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
-                  Od
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
-                  Do
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-contentPrimary">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-contentPrimary">
-                  Akcje
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-borderPrimary">
-              {filteredReservations.map((reservation, index) => {
-                const status = toReservationStatus(reservation.status);
-                return (
-                <tr key={reservation.id ?? index} className="hover:bg-backgroundSecondary transition">
-                  <td className="px-6 py-4 text-contentPrimary font-medium">
+        <Table>
+          <Table.Head>
+            <tr>
+              <Table.HeadCell>Sala</Table.HeadCell>
+              <Table.HeadCell>Rezerwujący</Table.HeadCell>
+              <Table.HeadCell>Od</Table.HeadCell>
+              <Table.HeadCell>Do</Table.HeadCell>
+              <Table.HeadCell>Status</Table.HeadCell>
+              <Table.HeadCell align="center">Akcje</Table.HeadCell>
+            </tr>
+          </Table.Head>
+
+          <Table.Body>
+            {filteredReservations.map((reservation, index) => {
+              const status = toReservationStatus(reservation.status);
+
+              return (
+                <Table.Row key={reservation.id ?? index}>
+                  <Table.Cell className="font-medium text-contentPrimary">
                     {reservation.roomName}
-                  </td>
-                  <td className="px-6 py-4 text-contentSecondary">
-                    {reservation.bookerName || '—'}
-                  </td>
-                  <td className="px-6 py-4 text-contentSecondary text-sm">
+                  </Table.Cell>
+
+                  <Table.Cell className="text-contentSecondary">
+                    {reservation.bookerName || "—"}
+                  </Table.Cell>
+
+                  <Table.Cell className="text-contentSecondary text-sm">
                     {reservation.startTime
                       ? formatDateTimeDisplay(reservation.startTime)
-                      : '—'}
-                  </td>
-                  <td className="px-6 py-4 text-contentSecondary text-sm">
+                      : "—"}
+                  </Table.Cell>
+
+                  <Table.Cell className="text-contentSecondary text-sm">
                     {reservation.endTime
                       ? formatDateTimeDisplay(reservation.endTime)
-                      : '—'}
-                  </td>
-                  <td className="px-6 py-4">
+                      : "—"}
+                  </Table.Cell>
+
+                  <Table.Cell>
                     {status && (
-                      <span
-                        className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${STATUS_COLORS[status]}`}
-                      >
+                      <Badge color={STATUS_COLORS[status] as BadgeColor}>
                         {RESERVATION_STATUS[status]}
-                      </span>
+                      </Badge>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-center">
+                  </Table.Cell>
+
+                  <Table.Cell align="center">
                     {reservation.id && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          reservation.id &&
-                          handleDeleteReservation(reservation.id)
-                        }
+                      <Button
+                        destructive
+                        size="sm"
+                        onClick={() => handleDeleteReservation(reservation.id!)}
                         disabled={deletingId === reservation.id}
-                        className="text-error hover:opacity-80 font-medium disabled:opacity-50"
                       >
-                        {deletingId === reservation.id ? 'Usuwanie...' : 'Usuń'}
-                      </button>
+                        {deletingId === reservation.id ? "Usuwanie..." : "Usuń"}
+                      </Button>
                     )}
-                  </td>
-                </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </LightCard>
+                  </Table.Cell>
+                </Table.Row>
+              );
+            })}
+          </Table.Body>
+        </Table>
       )}
     </div>
   );

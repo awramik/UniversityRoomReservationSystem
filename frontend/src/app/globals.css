@@ -55,11 +55,10 @@
 
   --color-buttonDestructive: #8E4A4A;
   --color-buttonDestructiveHover: #7A3F3F;
-  --color-buttonDestructiveActive: #652F2F;
   --color-buttonDestructiveText: #F3EFE7;
 
   --color-buttonGhost: transparent;
-  --color-buttonGhostHover: #E7E1D6;
+  --color-buttonGhostHover: #e3dbcc;
   --color-buttonGhostText: #4B554B;
 
   --color-badgeOlive: #5C6B4F;   /* admin / system */

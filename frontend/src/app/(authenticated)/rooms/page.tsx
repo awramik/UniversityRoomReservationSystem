@@ -2,7 +2,7 @@
 
 import { useState, ChangeEvent } from "react";
 import { ROOM_TYPES, RoomType, RoomResponse } from "@/src/app/lib/types";
-import { LightCard } from "@/src/design-system/cards";
+import { LightCard } from "@/src/design-system/cards/LightCard";
 import { Link } from "@/src/design-system/atoms/Link";
 import { useRooms } from "./_hooks/useRooms";
 

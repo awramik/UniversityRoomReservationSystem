@@ -14,7 +14,7 @@ import {
 import { formatDateTimeDisplay } from "@/src/app/lib/date-utils";
 import { Link } from "@/src/design-system/atoms/Link";
 import { Button } from "@/src/design-system/atoms/Button";
-import { LightCard } from "@/src/design-system/cards";
+import { LightCard } from "@/src/design-system/cards/LightCard";
 import { H1, H2 } from "@/src/design-system/typography/Heading";
 import { P2, P3 } from "@/src/design-system/typography/Paragraph";
 

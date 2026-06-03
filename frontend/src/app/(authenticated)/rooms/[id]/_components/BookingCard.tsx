@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 
-import { LightCard } from "@/src/design-system/cards";
+import { LightCard } from "@/src/design-system/cards/LightCard";
 import { Button } from "@/src/design-system/atoms/Button";
 import { Input } from "@/src/design-system/forms/Input";
 

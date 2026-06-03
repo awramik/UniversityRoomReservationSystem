@@ -2,9 +2,10 @@
 
 import { useAuth } from "@/src/app/auth/auth-context";
 import { Link } from "@/src/design-system/atoms/Link";
-import { LightCard } from "@/src/design-system/cards";
+import { LightCard } from "@/src/design-system/cards/LightCard";
 import { H1, H2, H3 } from "@/src/design-system/typography/Heading";
 import { P2, P3 } from "@/src/design-system/typography/Paragraph";
+import { Header } from "./_components/Header";
 
 const cardClass = "border-l-4 hover:shadow-lg transition cursor-pointer h-full";
 
@@ -13,12 +14,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <H1 className="mb-2">Witaj, {user?.name ?? user?.username}!</H1>
-        <P2 className="text-contentSecondary">
-          System do rezerwacji sal uniwersyteckich
-        </P2>
-      </div>
+      <Header title={`Witaj, ${user?.name ?? user?.username}!`} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link href="/rooms">

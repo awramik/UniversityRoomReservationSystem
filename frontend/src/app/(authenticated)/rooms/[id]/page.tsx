@@ -13,7 +13,7 @@ import {
   ROOM_TYPES,
 } from "@/src/app/lib/types";
 import { Link } from "@/src/design-system/atoms/Link";
-import { LightCard } from "@/src/design-system/cards";
+import { LightCard } from "@/src/design-system/cards/LightCard";
 import {
   calculateDurationHours,
   formatDateTimeForAPI,

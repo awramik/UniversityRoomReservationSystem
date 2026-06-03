@@ -1,4 +1,4 @@
-import { LightCard } from "@/src/design-system/cards";
+import { LightCard } from "@/src/design-system/cards/LightCard";
 import { RoomResponse, ROOM_TYPES } from "@/src/app/lib/types";
 
 export function RoomInfoCard({ room }: { room: RoomResponse }) {
