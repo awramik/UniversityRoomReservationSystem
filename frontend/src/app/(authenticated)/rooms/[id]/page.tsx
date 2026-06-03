@@ -73,7 +73,7 @@ export default function RoomDetailsPage() {
   return (
     <div className="flex flex-col gap-6">
       <Header title="Rezerwacja sali" />
-      <Breadcrumb href="/rooms" />
+      <Breadcrumb href="/rooms">Wróć do listy sal</Breadcrumb>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <RoomInfo room={room} />
