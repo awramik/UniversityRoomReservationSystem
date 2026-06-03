@@ -4,19 +4,18 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/src/app/lib/api-client";
 import { UserProfileResponse, APIError, USER_ROLES } from "@/src/app/lib/types";
 import { useAuth } from "@/src/app/auth/auth-context";
-import { LightCard } from "@/src/design-system/cards/LightCard";
 import { P2, P3 } from "@/src/design-system/typography/Paragraph";
 import { Header } from "../../_components/Header";
 import { Table } from "@/src/design-system/cards/Table";
+import { Badge, type BadgeColor } from "@/src/design-system/atoms/Badge";
+import { Select } from "@/src/design-system/forms/Select";
+import { Field, Label } from "@/src/design-system/forms/Fieldset";
 
-const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-errorSoft text-error",
-  LECTURER: "bg-accentSoft text-contentPrimary",
-  STUDENT: "bg-successSoft text-success",
+const ROLE_COLORS: Record<string, BadgeColor> = {
+  ADMIN: "orange",
+  LECTURER: "yellow",
+  STUDENT: "green",
 };
-
-const selectClass =
-  "px-3 py-2 border border-borderPrimary rounded-lg bg-backgroundPrimary text-contentPrimary focus:outline-none focus:ring-2 focus:ring-accentPrimary";
 
 export default function AdminUsersPage() {
   const { user } = useAuth();
@@ -84,24 +83,20 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* TOOLBAR */}
-      <LightCard className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 !p-4">
-        <div>
-          <P3 className="text-contentSecondary">Sortowanie</P3>
-          <p className="text-sm text-contentPrimary font-medium">
-            {sortBy === "name" ? "Imię i nazwisko" : "Rola użytkownika"}
-          </p>
-        </div>
+      {/* SORTING BAR (NOWE UI - bez karty) */}
+      {!isLoading && users.length > 0 && (
+        <Field className="max-w-sm">
+          <Label className="text-contentSecondary">Sortowanie</Label>
 
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as "name" | "role")}
-          className={selectClass}
-        >
-          <option value="name">Imię i nazwisko</option>
-          <option value="role">Rola</option>
-        </select>
-      </LightCard>
+          <Select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as "name" | "role")}
+          >
+            <option value="name">Imię i nazwisko</option>
+            <option value="role">Rola</option>
+          </Select>
+        </Field>
+      )}
 
       {/* LOADING */}
       {isLoading && (
@@ -114,11 +109,11 @@ export default function AdminUsersPage() {
 
       {/* EMPTY */}
       {!isLoading && users.length === 0 && (
-        <LightCard className="text-center py-10">
+        <div className="text-center py-10">
           <P2 className="text-contentSecondary">
             Brak użytkowników w systemie
           </P2>
-        </LightCard>
+        </div>
       )}
 
       {/* LIST */}
@@ -137,14 +132,14 @@ export default function AdminUsersPage() {
               <Table.Row key={u.id}>
                 {/* USER */}
                 <Table.Cell>
-                  <div className="min-w-0">
-                    <p className="text-base font-semibold text-contentPrimary truncate">
+                  <div className="min-w-0 space-y-1">
+                    <P2 className="font-semibold text-contentPrimary truncate">
                       {u.name} {u.surname}
-                    </p>
+                    </P2>
 
-                    <p className="text-sm text-contentSecondary truncate">
+                    <P3 className="text-contentSecondary truncate">
                       @{u.username}
-                    </p>
+                    </P3>
                   </div>
                 </Table.Cell>
 
@@ -155,14 +150,11 @@ export default function AdminUsersPage() {
 
                 {/* ROLE */}
                 <Table.Cell>
-                  <span
-                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                      (u.role && ROLE_COLORS[u.role]) ||
-                      "bg-backgroundTertiary text-contentSecondary"
-                    }`}
-                  >
-                    {(u.role && USER_ROLES[u.role]) || u.role || "—"}
-                  </span>
+                  {u.role && (
+                    <Badge color={ROLE_COLORS[u.role] as BadgeColor}>
+                      {USER_ROLES[u.role] || u.role || "—"}
+                    </Badge>
+                  )}
                 </Table.Cell>
               </Table.Row>
             ))}
