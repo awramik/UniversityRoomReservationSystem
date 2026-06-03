@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/src/app/lib/api-client";
-import { RoomResponse, APIError } from "@/src/app/lib/types";
+import { APIError, RoomResponse } from "@/src/app/lib/types";
 
 export function useRoom(roomId: string) {
   const [room, setRoom] = useState<RoomResponse | null>(null);
@@ -10,19 +10,17 @@ export function useRoom(roomId: string) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const run = async () => {
+    (async () => {
       try {
         setLoading(true);
         const data = await api.get<RoomResponse>(`/rooms/${roomId}`);
         setRoom(data);
       } catch (e) {
-        setError(e instanceof APIError ? e.message : "Błąd sieci");
+        setError(e instanceof APIError ? e.message : "Błąd");
       } finally {
         setLoading(false);
       }
-    };
-
-    run();
+    })();
   }, [roomId]);
 
   return { room, loading, error };

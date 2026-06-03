@@ -3,21 +3,22 @@
 import { useEffect, useState } from "react";
 import { api } from "@/src/app/lib/api-client";
 import { AvailabilityResponse } from "@/src/app/lib/types";
-import { toDateTime } from "../_utils/date";
+import { toDateTime } from "../_utils/time";
 
 export function useAvailability(
   roomId: string,
-  date: string,
-  startTime: string,
-  endTime: string,
+  date?: string,
+  startTime?: string,
+  endTime?: string,
 ) {
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(
     null,
   );
+
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    const run = async () => {
+    (async () => {
       if (!date || !startTime || !endTime) return;
 
       try {
@@ -38,10 +39,8 @@ export function useAvailability(
       } finally {
         setChecking(false);
       }
-    };
+    })();
+  }, [roomId, date, startTime, endTime]);
 
-    run();
-  }, [date, startTime, endTime, roomId]);
-
-  return { availability, checking, setAvailability };
+  return { availability, checking };
 }
