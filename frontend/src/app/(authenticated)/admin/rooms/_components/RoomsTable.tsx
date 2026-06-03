@@ -66,14 +66,24 @@ export function RoomsTable({ rooms, onEdit, onDelete }: Props) {
 
               <Table.Cell align="right">
                 <div className="flex justify-end gap-3">
-                  <Button size="sm" outline onClick={() => onEdit(room)}>
+                  <Button
+                    size="sm"
+                    outline
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(room);
+                    }}
+                  >
                     Edytuj
                   </Button>
 
                   <Button
                     size="sm"
                     destructive
-                    onClick={() => room.id && onDelete(room.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      room.id && onDelete(room.id);
+                    }}
                   >
                     Usuń
                   </Button>

@@ -60,7 +60,10 @@ export function ReservationRow({ reservation, deleting, onCancel }: Props) {
           <Button
             destructive
             size="sm"
-            onClick={() => onCancel(reservation.id!)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel(reservation.id!);
+            }}
             disabled={deleting}
           >
             {deleting ? "Anulowanie..." : "Anuluj"}
