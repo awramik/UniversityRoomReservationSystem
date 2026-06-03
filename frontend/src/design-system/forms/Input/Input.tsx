@@ -16,7 +16,7 @@ type InputProps = InputStyleProps & InputHTMLAttributes<HTMLInputElement>;
 
 const getInputClasses = (variant: InputVariantType) => {
   const baseClasses =
-    "border outline-none transition-all duration-200 bg-white/30 placeholder:text-stone-400 mt-0.5 w-full rounded-lg px-4 py-2 outline-none focus:ring-2 transition";
+    "border outline-none transition-all duration-200 bg-white/30 placeholder:text-contentTertiary mt-0.5 w-full rounded-lg px-4 py-2 outline-none focus:ring-2 transition cursor-default";
 
   switch (variant) {
     case InputVariant.ERROR:

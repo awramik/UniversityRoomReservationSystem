@@ -14,7 +14,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <H1 className="mb-2">Witaj, {user?.name}!</H1>
+        <H1 className="mb-2">Witaj, {user?.name ?? user?.username}!</H1>
         <P2 className="text-contentSecondary">
           System do rezerwacji sal uniwersyteckich
         </P2>
