@@ -3,29 +3,36 @@ import * as Headless from "@headlessui/react";
 import React from "react";
 import { Link } from "./Link";
 
+type Size = "base" | "sm";
+
+const sizeStyles = {
+  base: "px-6 py-2 text-base",
+  sm: "px-3 py-1 text-sm",
+} as const;
+
 const baseStyles =
-  "inline-flex items-center justify-center font-medium rounded-lg px-6 py-2 w-fit text-base text-nowrap transition-colors hover:cursor-default";
+  "inline-flex items-center justify-center font-medium rounded-lg w-fit text-nowrap transition-colors hover:cursor-default transition duration-200";
 
 const variantStyles = {
   default: {
     base: "bg-buttonColor border-buttonColor border-1 text-buttonText custom-shadow",
-    hover: "hover:bg-buttonColorHover transition duration-200",
+    hover: "hover:bg-buttonColorHover",
   },
   outline: {
-    base: "border-1 border-borderSecondary text-buttonGhostText transition duration-200",
+    base: "border-1 border-borderSecondary text-buttonGhostText",
     hover: "hover:bg-buttonGhostHover",
   },
   plain: {
-    base: "border-1 border-transparent py-1 text-contentTertiary transition duration-200",
-    hover: "",
+    base: "border-1 border-transparent text-contentTertiary",
+    hover: "hover:bg-buttonGhostHover",
   },
   destructive: {
-    base: "bg-actionDestructive border-1 border-borderDestructive text-contentInverted custom-shadow",
-    hover: "hover:brightness-105 transition duration-200",
+    base: "bg-buttonDestructive border-1 border-buttonDestructive text-buttonDestructiveText custom-shadow",
+    hover: "hover:bg-buttonDestructiveHover",
   },
   outlineDestructive: {
-    base: "border-1 border-borderDestructive text-contentDestructive bg-actionDestructive/5",
-    hover: "hover:brightness-105 transition duration-200",
+    base: "border-1 border-buttonDestructive text-buttonDestructive bg-buttonDestructive/5",
+    hover: "hover:bg-buttonDestructive/10",
   },
 } as const;
 
@@ -66,6 +73,7 @@ type BaseButtonProps = {
   className?: string;
   href?: string;
   disabled?: boolean;
+  size?: Size;
 } & Omit<Headless.ButtonProps, "as" | "className">;
 
 type ButtonProps = BaseButtonProps & VariantFlags;
@@ -81,6 +89,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
       plain,
       destructive,
       outlineDestructive,
+      size = "base",
       ...props
     },
     ref,
@@ -96,6 +105,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
 
     const classes = cn(
       baseStyles,
+      sizeStyles[size],
       variantClass.base,
       variantClass.hover,
       disabled && "opacity-50 hover:cursor-default pointer-events-none",

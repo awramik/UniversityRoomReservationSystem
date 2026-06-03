@@ -1,31 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/src/app/lib/api-client";
 import {
   RoomResponse,
   RoomRequest,
   UpdateRoomRequest,
   APIError,
-  ROOM_TYPES,
-  RoomType,
 } from "@/src/app/lib/types";
 import { useAuth } from "@/src/app/auth/auth-context";
+import { Header } from "../../_components/Header";
 import { Button } from "@/src/design-system/atoms/Button";
-import { LightCard } from "@/src/design-system/cards";
-import { H1, H2 } from "@/src/design-system/typography/Heading";
-import { P2 } from "@/src/design-system/typography/Paragraph";
-import { Input } from "@/src/design-system/forms/Input";
-import { Fieldset, Field, Label } from "@headlessui/react";
-
-const fieldClass =
-  "w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:outline-none focus:ring-2 focus:ring-accentPrimary";
-
-const ROOM_TYPE_OPTIONS = Object.keys(ROOM_TYPES) as RoomType[];
-
-function toRoomType(value: string | undefined): RoomType {
-  return value && value in ROOM_TYPES ? (value as RoomType) : "LECTURE";
-}
+import { LightCard } from "@/src/design-system/cards/LightCard";
+import { RoomsTable } from "./_components/RoomsTable";
+import { RoomForm } from "./_components/RoomForm";
 
 export default function AdminRoomsPage() {
   const { user } = useAuth();
@@ -35,18 +23,7 @@ export default function AdminRoomsPage() {
   const [error, setError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState<RoomRequest>({
-    name: "",
-    buildingName: "",
-    capacity: 1,
-    roomType: "LECTURE",
-    description: "",
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState("");
+  const [editingRoom, setEditingRoom] = useState<RoomResponse | null>(null);
 
   const didFetch = useRef(false);
 
@@ -80,78 +57,19 @@ export default function AdminRoomsPage() {
     loadRooms();
   }, [user?.role, loadRooms]);
 
-  const handleFormChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => {
-      if (name === "capacity") {
-        return {
-          ...prev,
-          capacity: value === "" ? 1 : Number(value),
-        };
-      }
-
-      if (name === "roomType") {
-        return {
-          ...prev,
-          roomType: toRoomType(value),
-        };
-      }
-
-      return {
-        ...prev,
-        [name]: value,
-      };
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError("");
-    setIsSubmitting(true);
-
-    try {
-      if (editingId) {
-        const updateData: UpdateRoomRequest = {
-          name: formData.name || undefined,
-          buildingName: formData.buildingName || undefined,
-          capacity: formData.capacity || undefined,
-          description: formData.description || undefined,
-        };
-
-        await api.patch(`/rooms/${editingId}`, updateData);
-      } else {
-        await api.post("/rooms", formData);
-      }
-
-      await loadRooms();
-      handleFormClose();
-    } catch (err) {
-      if (err instanceof APIError) {
-        setFormError(err.message || "Błąd podczas zapisywania sali");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleEdit = (room: RoomResponse) => {
-    if (!room.id) return;
-
-    setEditingId(room.id);
-    setFormData({
-      name: room.name ?? "",
-      buildingName: room.buildingName ?? "",
-      capacity: room.capacity ?? 1,
-      roomType: toRoomType(room.roomType),
-      description: room.description ?? "",
-    });
-
+    setEditingRoom(room);
     setShowForm(true);
+  };
+
+  const handleCreate = () => {
+    setEditingRoom(null);
+    setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingRoom(null);
   };
 
   const handleDelete = async (roomId: string) => {
@@ -167,35 +85,34 @@ export default function AdminRoomsPage() {
     }
   };
 
-  const handleFormClose = () => {
-    setShowForm(false);
-    setEditingId(null);
+  const handleSubmit = async (
+    data: RoomRequest | UpdateRoomRequest,
+    id?: string,
+  ) => {
+    try {
+      if (id) {
+        await api.patch(`/rooms/${id}`, data);
+      } else {
+        await api.post("/rooms", data);
+      }
 
-    setFormData({
-      name: "",
-      buildingName: "",
-      capacity: 1,
-      roomType: "LECTURE",
-      description: "",
-    });
-
-    setFormError("");
+      await loadRooms();
+      handleCloseForm();
+    } catch (err) {
+      if (err instanceof APIError) {
+        throw err;
+      }
+    }
   };
 
   return (
     <div className="space-y-8">
-      <div className="flex items-end justify-between">
-        <div>
-          <H1>Zarządzanie salami</H1>
-          <P2 className="text-contentSecondary mt-1">
-            Twórz i edytuj sale w systemie
-          </P2>
-        </div>
-
-        {!showForm && (
-          <Button onClick={() => setShowForm(true)}>+ Nowa sala</Button>
-        )}
-      </div>
+      <Header
+        title="Zarządzanie salami"
+        details="Twórz i edytuj sale w systemie"
+      >
+        {!showForm && <Button onClick={handleCreate}>+ Nowa sala</Button>}
+      </Header>
 
       {error && (
         <div className="rounded-xl border border-error bg-errorSoft text-error px-4 py-3">
@@ -203,146 +120,21 @@ export default function AdminRoomsPage() {
         </div>
       )}
 
-      {showForm && (
+      {showForm ? (
         <LightCard>
-          <div className="flex items-center justify-between mb-6">
-            <H2>{editingId ? "Edytuj salę" : "Nowa sala"}</H2>
-          </div>
-
-          {formError && (
-            <div className="mb-4 text-sm border border-error bg-errorSoft text-error p-3 rounded-lg">
-              {formError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Fieldset className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field>
-                <Label htmlFor="name">Nazwa sali</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleFormChange}
-                />
-              </Field>
-
-              <Field>
-                <Label htmlFor="buildingName">Budynek</Label>
-                <Input
-                  id="buildingName"
-                  name="buildingName"
-                  value={formData.buildingName}
-                  onChange={handleFormChange}
-                />
-              </Field>
-
-              <Field>
-                <Label htmlFor="capacity">Pojemność</Label>
-                <Input
-                  id="capacity"
-                  name="capacity"
-                  type="number"
-                  value={formData.capacity}
-                  onChange={handleFormChange}
-                />
-              </Field>
-
-              <Field>
-                <Label htmlFor="roomType">Typ sali</Label>
-                <select
-                  id="roomType"
-                  name="roomType"
-                  value={formData.roomType}
-                  onChange={handleFormChange}
-                  className={fieldClass}
-                >
-                  {ROOM_TYPE_OPTIONS.map((t) => (
-                    <option key={t} value={t}>
-                      {ROOM_TYPES[t]}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </Fieldset>
-
-            <Field>
-              <Label htmlFor="description">Opis</Label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleFormChange}
-                rows={3}
-                className={fieldClass}
-              />
-            </Field>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" outline onClick={handleFormClose}>
-                Anuluj
-              </Button>
-
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Zapisywanie..." : "Zapisz"}
-              </Button>
-            </div>
-          </form>
+          <RoomForm
+            editingRoom={editingRoom}
+            onSubmit={handleSubmit}
+            onCancel={handleCloseForm}
+          />
         </LightCard>
-      )}
-
-      {!showForm && (
-        <LightCard className="p-0! overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-backgroundSecondary text-contentSecondary">
-              <tr>
-                <th className="text-left p-4">Nazwa</th>
-                <th className="text-left p-4">Budynek</th>
-                <th className="text-left p-4">Pojemność</th>
-                <th className="text-left p-4">Typ</th>
-                <th className="text-right p-4">Akcje</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {rooms.map((room, index) => (
-                <tr
-                  key={room.id ?? index}
-                  className="border-t border-borderPrimary hover:bg-backgroundSecondary transition"
-                >
-                  <td className="p-4 font-medium">{room.name}</td>
-                  <td className="p-4 text-contentSecondary">
-                    {room.buildingName}
-                  </td>
-                  <td className="p-4 text-contentSecondary">{room.capacity}</td>
-                  <td className="p-4 text-contentSecondary">
-                    {room.roomType && room.roomType in ROOM_TYPES
-                      ? ROOM_TYPES[toRoomType(room.roomType)]
-                      : "—"}
-                  </td>
-
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => handleEdit(room)}
-                        className="text-accentBase hover:text-accentHover font-medium"
-                      >
-                        Edytuj
-                      </button>
-
-                      <button
-                        onClick={() => room.id && handleDelete(room.id)}
-                        className="text-error hover:opacity-80 font-medium"
-                      >
-                        Usuń
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </LightCard>
+      ) : (
+        <RoomsTable
+          rooms={rooms}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       )}
     </div>
   );

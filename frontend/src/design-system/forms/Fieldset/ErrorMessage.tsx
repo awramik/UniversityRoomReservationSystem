@@ -14,7 +14,7 @@ export function ErrorMessage({
       data-slot="error"
       {...props}
       className={cn(
-        "text-contentError text-sm data-disabled:opacity-50",
+        "text-error text-sm data-disabled:opacity-50 mt-1",
         className,
       )}
     />

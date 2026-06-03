@@ -1,32 +1,32 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { api } from '@/src/app/lib/api-client';
+import { useState } from "react";
+import { api } from "@/src/app/lib/api-client";
 import {
   UserProfileResponse,
   UpdateUserProfileRequest,
   APIError,
-} from '@/src/app/lib/types';
-import { useAuth } from '@/src/app/auth/auth-context';
-import { Button } from '@/src/design-system/atoms/Button';
-import { LightCard } from '@/src/design-system/cards';
-import { H1 } from '@/src/design-system/typography/Heading';
-import { P2, P3 } from '@/src/design-system/typography/Paragraph';
-import { Field, Label } from '@/src/design-system/forms/Fieldset';
-import { Input } from '@/src/design-system/forms/Input';
+} from "@/src/app/lib/types";
+import { useAuth } from "@/src/app/auth/auth-context";
+import { Button } from "@/src/design-system/atoms/Button";
+import { LightCard } from "@/src/design-system/cards/LightCard";
+import { H1 } from "@/src/design-system/typography/Heading";
+import { P2, P3 } from "@/src/design-system/typography/Paragraph";
+import { Field, Label } from "@/src/design-system/forms/Fieldset";
+import { Input } from "@/src/design-system/forms/Input";
 
 export default function UserProfilePage() {
   const { user, refreshUser } = useAuth();
 
   const [formData, setFormData] = useState<UpdateUserProfileRequest>({
-    name: user?.name || '',
-    surname: user?.surname || '',
-    email: user?.email || '',
+    name: user?.name || "",
+    surname: user?.surname || "",
+    email: user?.email || "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   if (!user) {
     return null;
@@ -44,8 +44,8 @@ export default function UserProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     setIsLoading(true);
 
     try {
@@ -56,31 +56,31 @@ export default function UserProfilePage() {
       };
 
       const updatedUser = await api.patch<UserProfileResponse>(
-        '/users/me',
-        updateData
+        "/users/me",
+        updateData,
       );
 
       if (updatedUser) {
         setFormData({
-          name: updatedUser.name || '',
-          surname: updatedUser.surname || '',
-          email: updatedUser.email || '',
+          name: updatedUser.name || "",
+          surname: updatedUser.surname || "",
+          email: updatedUser.email || "",
         });
       }
 
       await refreshUser();
       await refreshUser();
 
-      setSuccess('Profil został zaktualizowany');
+      setSuccess("Profil został zaktualizowany");
 
       setTimeout(() => {
-        setSuccess('');
+        setSuccess("");
       }, 3000);
     } catch (err) {
       if (err instanceof APIError) {
-        setError(err.message || 'Błąd podczas aktualizacji profilu');
+        setError(err.message || "Błąd podczas aktualizacji profilu");
       } else {
-        setError('Błąd sieci');
+        setError("Błąd sieci");
       }
     } finally {
       setIsLoading(false);
@@ -91,9 +91,7 @@ export default function UserProfilePage() {
     <div className="space-y-6">
       <div>
         <H1>Mój profil</H1>
-        <P2 className="text-contentSecondary">
-          Edytuj swoje dane profilowe
-        </P2>
+        <P2 className="text-contentSecondary">Edytuj swoje dane profilowe</P2>
       </div>
 
       <div className="max-w-2xl">
@@ -114,11 +112,11 @@ export default function UserProfilePage() {
                   Rola
                 </P3>
                 <p className="text-contentPrimary font-medium">
-                  {user.role === 'ADMIN'
-                    ? 'Administrator'
-                    : user.role === 'LECTURER'
-                    ? 'Wykładowca'
-                    : 'Student'}
+                  {user.role === "ADMIN"
+                    ? "Administrator"
+                    : user.role === "LECTURER"
+                      ? "Wykładowca"
+                      : "Student"}
                 </p>
               </div>
             </div>
@@ -143,7 +141,7 @@ export default function UserProfilePage() {
                 type="text"
                 id="name"
                 name="name"
-                value={formData.name || ''}
+                value={formData.name || ""}
                 onChange={handleChange}
                 placeholder="Wpisz imię"
                 disabled={isLoading}
@@ -156,7 +154,7 @@ export default function UserProfilePage() {
                 type="text"
                 id="surname"
                 name="surname"
-                value={formData.surname || ''}
+                value={formData.surname || ""}
                 onChange={handleChange}
                 placeholder="Wpisz nazwisko"
                 disabled={isLoading}
@@ -169,7 +167,7 @@ export default function UserProfilePage() {
                 type="email"
                 id="email"
                 name="email"
-                value={formData.email || ''}
+                value={formData.email || ""}
                 onChange={handleChange}
                 placeholder="Wpisz email"
                 disabled={isLoading}
@@ -178,7 +176,7 @@ export default function UserProfilePage() {
 
             <div className="flex gap-4">
               <Button type="submit" disabled={isLoading} className="flex-1">
-                {isLoading ? 'Aktualizowanie...' : 'Zapisz zmiany'}
+                {isLoading ? "Aktualizowanie..." : "Zapisz zmiany"}
               </Button>
 
               <Button outline href="/" className="flex-1">
