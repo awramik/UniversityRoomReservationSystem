@@ -79,7 +79,7 @@ export default function Dashboard() {
             title="Sale"
             description="Przeglądaj dostępne sale i rezerwuj terminy."
             icon={BuildingOfficeIcon}
-            cta="Przejdź"
+            cta="Przejdź do sal"
           />
 
           <DashboardCard
@@ -87,7 +87,7 @@ export default function Dashboard() {
             title="Rezerwacje"
             description="Zarządzaj swoimi rezerwacjami i terminami."
             icon={CalendarDaysIcon}
-            cta="Otwórz"
+            cta="Przejdź do rezerwacji"
           />
 
           <DashboardCard
@@ -95,7 +95,7 @@ export default function Dashboard() {
             title="Profil"
             description="Zarządzaj swoimi danymi i ustawieniami."
             icon={UserIcon}
-            cta="Edytuj"
+            cta="Edytuj profil"
           />
         </div>
       </section>
@@ -111,7 +111,7 @@ export default function Dashboard() {
               title="Zarządzanie salami"
               description="Dodawaj, edytuj i usuwaj sale."
               icon={Cog6ToothIcon}
-              cta="Otwórz"
+              cta="Zarządzaj salami"
             />
 
             <DashboardCard
@@ -119,7 +119,7 @@ export default function Dashboard() {
               title="Użytkownicy"
               description="Przeglądaj i zarządzaj kontami."
               icon={UsersIcon}
-              cta="Otwórz"
+              cta="Zarządzaj użytkownikami"
             />
 
             <DashboardCard
@@ -127,7 +127,7 @@ export default function Dashboard() {
               title="Rezerwacje"
               description="Zarządzaj wszystkimi rezerwacjami."
               icon={ClipboardDocumentListIcon}
-              cta="Otwórz"
+              cta="Zarządzaj rezerwacjami"
             />
           </div>
         </section>

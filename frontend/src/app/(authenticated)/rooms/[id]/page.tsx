@@ -12,27 +12,30 @@ import {
   APIError,
   ROOM_TYPES,
 } from "@/src/app/lib/types";
-import { Link } from "@/src/design-system/atoms/Link";
 import { LightCard } from "@/src/design-system/cards/LightCard";
-import {
-  calculateDurationHours,
-  formatDateTimeForAPI,
-} from "@/src/app/lib/date-utils";
 import { Button } from "@/src/design-system/atoms/Button";
 import { Input } from "@/src/design-system/forms/Input";
+import { Select } from "@/src/design-system/forms/Select";
+import { Textarea } from "@/src/design-system/forms/Textarea";
+import { cn } from "@/src/design-system/utils";
+import { Header } from "../../_components/Header";
+import { H1, H3, H2 } from "@/src/design-system/typography/Heading";
+import { P1, P3 } from "@/src/design-system/typography/Paragraph";
+import { ClockIcon } from "@heroicons/react/24/outline";
+import { Breadcrumb } from "../../_components/Breadcrumb";
+import { Fieldset, Field, Label } from "@/src/design-system/forms/Fieldset";
 
-type FormValues = Omit<ReservationRequest, "roomId"> & {
+type FormValues = {
   date: string;
+  startTime: string;
+  endTime: string;
+  purpose: string;
 };
 
 const WORK_START = 6;
 const WORK_END = 22;
 const SLOT_STEP = 15;
 const MIN_DURATION = 30;
-
-// ----------------------
-// utils
-// ----------------------
 
 function toDateTime(date: string, time: string) {
   return parseISO(`${date}T${time}:00`);
@@ -47,30 +50,15 @@ function roundUpToStep(date: Date, step: number) {
   return new Date(Math.ceil(date.getTime() / ms) * ms);
 }
 
-// ----------------------
-// SLOT LOGIC (FIXED)
-// ----------------------
-
 function generateStartTimes(date: string) {
-  const parsedDate = parseISO(date);
+  const parsed = parseISO(date);
 
-  const startBase = set(parsedDate, {
-    hours: WORK_START,
-    minutes: 0,
-    seconds: 0,
-    milliseconds: 0,
-  });
-
-  const lastStart = set(parsedDate, {
-    hours: 21,
-    minutes: 30,
-    seconds: 0,
-    milliseconds: 0,
-  });
+  const startBase = set(parsed, { hours: WORK_START, minutes: 0 });
+  const lastStart = set(parsed, { hours: 21, minutes: 30 });
 
   let cursor = startBase;
 
-  if (isToday(parsedDate)) {
+  if (isToday(parsed)) {
     const now = new Date();
     const rounded = roundUpToStep(now, SLOT_STEP);
     cursor = isBefore(rounded, startBase) ? startBase : rounded;
@@ -78,10 +66,7 @@ function generateStartTimes(date: string) {
 
   const result: string[] = [];
 
-  while (
-    isBefore(cursor, lastStart) ||
-    cursor.getTime() === lastStart.getTime()
-  ) {
+  while (cursor <= lastStart) {
     result.push(formatTime(cursor));
     cursor = addMinutes(cursor, SLOT_STEP);
   }
@@ -90,27 +75,13 @@ function generateStartTimes(date: string) {
 }
 
 function generateEndTimes(date: string, startTime: string) {
-  if (!date || !startTime) return [];
-
-  const parsedDate = parseISO(date);
-
   const start = toDateTime(date, startTime);
-
-  const endLimit = set(parsedDate, {
-    hours: WORK_END,
-    minutes: 0,
-    seconds: 0,
-    milliseconds: 0,
-  });
+  const limit = set(parseISO(date), { hours: WORK_END, minutes: 0 });
 
   const result: string[] = [];
-
   let cursor = addMinutes(start, MIN_DURATION);
 
-  while (
-    isBefore(cursor, endLimit) ||
-    cursor.getTime() === endLimit.getTime()
-  ) {
+  while (cursor <= limit) {
     result.push(formatTime(cursor));
     cursor = addMinutes(cursor, SLOT_STEP);
   }
@@ -118,72 +89,51 @@ function generateEndTimes(date: string, startTime: string) {
   return result;
 }
 
-// ----------------------
-// PAGE
-// ----------------------
-
 export default function RoomDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const roomId = params.id as string;
 
   const [room, setRoom] = useState<RoomResponse | null>(null);
-  const [loadingRoom, setLoadingRoom] = useState(true);
-  const [roomError, setRoomError] = useState("");
-
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(
     null,
   );
+
+  const [loadingRoom, setLoadingRoom] = useState(true);
   const [checking, setChecking] = useState(false);
 
+  const [error, setError] = useState("");
   const [submitError, setSubmitError] = useState("");
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const { register, handleSubmit, watch, setValue } = useForm<FormValues>({
-    defaultValues: {
-      date: "",
-      startTime: "",
-      endTime: "",
-      purpose: "",
-    },
-  });
+  const { register, handleSubmit, watch, setValue } = useForm<FormValues>();
 
   const date = watch("date");
   const startTime = watch("startTime");
   const endTime = watch("endTime");
 
-  // reset endTime when startTime changes
+  /* reset end when start changes */
   useEffect(() => {
     setValue("endTime", "");
   }, [startTime, setValue]);
 
-  // ----------------------
-  // LOAD ROOM
-  // ----------------------
-
   useEffect(() => {
-    const run = async () => {
+    (async () => {
       try {
         setLoadingRoom(true);
         const data = await api.get<RoomResponse>(`/rooms/${roomId}`);
         setRoom(data);
       } catch (e) {
-        setRoomError(e instanceof APIError ? e.message : "Błąd sieci");
+        setError(e instanceof APIError ? e.message : "Błąd");
       } finally {
         setLoadingRoom(false);
       }
-    };
-
-    run();
+    })();
   }, [roomId]);
 
-  // ----------------------
-  // AVAILABILITY
-  // ----------------------
-
   useEffect(() => {
-    const run = async () => {
+    (async () => {
       if (!date || !startTime || !endTime) return;
 
       try {
@@ -204,14 +154,8 @@ export default function RoomDetailsPage() {
       } finally {
         setChecking(false);
       }
-    };
-
-    run();
+    })();
   }, [date, startTime, endTime, roomId]);
-
-  // ----------------------
-  // OPTIONS
-  // ----------------------
 
   const startOptions = useMemo(
     () => (date ? generateStartTimes(date) : []),
@@ -223,41 +167,39 @@ export default function RoomDetailsPage() {
     [date, startTime],
   );
 
+  const noSlotsToday =
+    date && isToday(parseISO(date)) && startOptions.length === 0;
+
   const duration =
     date && startTime && endTime
-      ? calculateDurationHours(
-          toDateTime(date, startTime).toISOString(),
-          toDateTime(date, endTime).toISOString(),
-        )
-      : 0;
-
-  // ----------------------
-  // SUBMIT
-  // ----------------------
+      ? (
+          (toDateTime(date, endTime).getTime() -
+            toDateTime(date, startTime).getTime()) /
+          3600000
+        ).toFixed(1)
+      : null;
 
   const onSubmit = async (data: FormValues) => {
     setSubmitError("");
-    setSubmitSuccess(false);
+    setSuccess(false);
 
     if (!availability?.available) {
-      setSubmitError("Ten termin jest niedostępny");
+      setSubmitError("Termin zajęty");
       return;
     }
 
     try {
       setSubmitting(true);
 
-      const payload: ReservationRequest = {
+      await api.post("/reservations", {
         roomId,
-        startTime: formatDateTimeForAPI(toDateTime(data.date, data.startTime)),
-        endTime: formatDateTimeForAPI(toDateTime(data.date, data.endTime)),
+        startTime: toDateTime(data.date, data.startTime).toISOString(),
+        endTime: toDateTime(data.date, data.endTime).toISOString(),
         purpose: data.purpose || undefined,
-      };
+      } satisfies ReservationRequest);
 
-      await api.post("/reservations", payload);
-
-      setSubmitSuccess(true);
-      setTimeout(() => router.push("/reservations"), 1200);
+      setSuccess(true);
+      setTimeout(() => router.push("/reservations"), 1000);
     } catch (e) {
       setSubmitError(e instanceof APIError ? e.message : "Błąd");
     } finally {
@@ -265,169 +207,164 @@ export default function RoomDetailsPage() {
     }
   };
 
-  // ----------------------
-  // LOADING
-  // ----------------------
-
   if (loadingRoom) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Ładowanie...
-      </div>
-    );
+    return <div className="p-10 text-center">Ładowanie...</div>;
   }
 
-  if (roomError || !room) {
-    return (
-      <div className="space-y-4">
-        <Link href="/rooms">← Wróć</Link>
-        <p className="text-red-500">{roomError || "Brak sali"}</p>
-      </div>
-    );
+  if (!room || error) {
+    return <div className="p-10 text-error">{error || "Brak sali"}</div>;
   }
 
-  // ----------------------
-  // UI
-  // ----------------------
+  const durationMinutes =
+    date && startTime && endTime
+      ? Math.round(
+          (toDateTime(date, endTime).getTime() -
+            toDateTime(date, startTime).getTime()) /
+            60000,
+        )
+      : null;
+
+  const durationHours = durationMinutes ? Math.floor(durationMinutes / 60) : 0;
+
+  const durationMins = durationMinutes ? durationMinutes % 60 : 0;
 
   return (
-    <div className="space-y-8">
-      <Link href="/rooms" className="text-sm text-gray-500 hover:text-black">
-        ← Powrót do sal
-      </Link>
+    <div className="flex flex-col gap-6">
+      <Header title="Rezerwacja sali" />
+      <Breadcrumb href="/rooms" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ROOM INFO */}
-        <div className="lg:col-span-2">
-          <LightCard className="space-y-5">
+        {/* ROOM */}
+        <LightCard className="lg:col-span-2 space-y-6">
+          <header className="space-y-3">
+            <H1 className="font-bold border-b border-borderPrimary pb-2">
+              Sala {room.name}
+            </H1>
+            <H3 className="text-contentSecondary">
+              Budynek: {room.buildingName}
+            </H3>
+          </header>
+
+          <div className="flex gap-8 text-sm">
             <div>
-              <h1 className="text-3xl font-bold">{room.name}</h1>
-              <p className="text-gray-500">{room.buildingName}</p>
+              <P3 className="text-contentTertiary">Pojemność</P3>
+              <P1 className="font-semibold">{room.capacity}</P1>
             </div>
 
-            <div className="flex gap-8">
+            {room.roomType && (
               <div>
-                <p className="text-xs text-gray-400">Pojemność</p>
-                <p className="text-xl font-semibold">{room.capacity}</p>
+                <P3 className="text-contentTertiary">Typ</P3>
+                <P1 className="font-semibold">{ROOM_TYPES[room.roomType]}</P1>
               </div>
-
-              <div>
-                <p className="text-xs text-gray-400">Typ</p>
-                <p className="text-xl font-semibold">
-                  {ROOM_TYPES[room.roomType as keyof typeof ROOM_TYPES] ??
-                    room.roomType}
-                </p>
-              </div>
-            </div>
-
-            {room.description && (
-              <p className="text-gray-600 leading-relaxed">
-                {room.description}
-              </p>
             )}
-          </LightCard>
-        </div>
+          </div>
+
+          {room.description && (
+            <div>
+              <P3 className="text-contentTertiary">Opis</P3>
+              <P1>{room.description}</P1>
+            </div>
+          )}
+        </LightCard>
 
         {/* BOOKING */}
-        <div className="lg:col-span-1">
-          <LightCard className="space-y-5">
-            <h2 className="text-xl font-bold">Rezerwacja</h2>
+        <LightCard className="space-y-4">
+          <H2 className="font-bold">Rezerwacja</H2>
 
-            {date && startTime && endTime && (
-              <div className="rounded-lg border p-3 text-sm">
-                {checking ? (
-                  <span className="text-gray-500">Sprawdzanie...</span>
-                ) : availability?.available ? (
-                  <span className="text-green-600 font-medium">✓ Dostępna</span>
-                ) : (
-                  <span className="text-red-500 font-medium">✗ Zajęta</span>
-                )}
-              </div>
-            )}
+          {success && <P3 className="text-success">✓ Utworzono rezerwację</P3>}
+          {submitError && <P3 className="text-error">{submitError}</P3>}
 
-            {submitSuccess && (
-              <div className="text-green-600 text-sm font-medium">
-                ✓ Rezerwacja utworzona
-              </div>
-            )}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <Fieldset>
+              <Field>
+                <Label>Data rezerwacji</Label>
+                <Input type="date" {...register("date")} />
+              </Field>
 
-            {submitError && (
-              <div className="text-red-500 text-sm">{submitError}</div>
-            )}
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-              <Input
-                type="date"
-                {...register("date")}
-                min={format(new Date(), "yyyy-MM-dd")}
-                className="w-full rounded-md border p-2"
-                onChange={(e) => {
-                  register("date").onChange(e);
-                  setValue("startTime", "");
-                  setValue("endTime", "");
-                  setAvailability(null);
-                }}
-              />
-
+              {/* TIME ROW */}
               {date && (
-                <select
-                  {...register("startTime")}
-                  className="w-full rounded-md border p-2"
-                  onChange={(e) => {
-                    register("startTime").onChange(e);
-                    setValue("endTime", "");
-                  }}
+                <>
+                  {noSlotsToday ? (
+                    <P3 className="text-error">
+                      Brak możliwości rezerwacji na wybrany dzień
+                    </P3>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field className="space-y-1">
+                        <Label>Godzina startu</Label>
+                        <Select {...register("startTime")}>
+                          <option value="">Wybierz</option>
+                          {startOptions.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+
+                      <Field className="space-y-1">
+                        <Label>Godzina końca</Label>
+                        <Select {...register("endTime")} disabled={!startTime}>
+                          <option value="">{"Wybierz"}</option>
+                          {endOptions.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {availability && (
+                <div
+                  className={cn(
+                    "text-base px-2 rounded-lg",
+                    availability.available ? "text-success" : "text-error",
+                  )}
                 >
-                  <option value="">Wybierz start</option>
-                  {startOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
+                  {checking
+                    ? "Sprawdzanie..."
+                    : availability.available
+                      ? "Dostępna"
+                      : "Zajęta"}
+                </div>
               )}
 
-              {startTime && (
-                <select
-                  {...register("endTime")}
-                  className="w-full rounded-md border p-2"
-                >
-                  <option value="">Wybierz koniec</option>
-                  {endOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
+              {durationMinutes !== null && (
+                <P3 className="flex gap-2 text-contentTertiary">
+                  <ClockIcon className="h-4 w-4" />
+                  Czas rezerwacji: {durationHours > 0 && `${durationHours}h `}
+                  {durationMins > 0 ? `${durationMins}min` : ""}
+                </P3>
               )}
 
-              {duration > 0 && (
-                <p className="text-xs text-gray-500">
-                  ⏱ {duration.toFixed(1)}h
-                </p>
-              )}
+              <Field>
+                <Label>Cel rezerwacji</Label>
+                <Textarea
+                  {...register("purpose")}
+                  placeholder="Cel rezerwacji"
+                />
+              </Field>
+            </Fieldset>
 
-              <textarea
-                {...register("purpose")}
-                className="w-full rounded-md border p-2"
-                placeholder="Cel rezerwacji (opcjonalnie)"
-              />
-
-              <Button
-                type="submit"
-                disabled={
-                  submitting ||
-                  !availability?.available ||
-                  !date ||
-                  !startTime ||
-                  !endTime
-                }
-              >
-                {submitting ? "Rezerwuję..." : "Zarezerwuj"}
-              </Button>
-            </form>
-          </LightCard>
-        </div>
+            <Button
+              type="submit"
+              disabled={
+                submitting ||
+                !availability?.available ||
+                !date ||
+                !startTime ||
+                !endTime
+              }
+              className="w-full"
+            >
+              {submitting ? "Rezerwuję..." : "Zarezerwuj"}
+            </Button>
+          </form>
+        </LightCard>
       </div>
     </div>
   );
