@@ -2,31 +2,42 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/src/app/lib/api-client";
-import { RoomResponse, APIError } from "@/src/app/lib/types";
+import { RoomResponse, APIError, RoomType } from "@/src/app/lib/types";
 
 type CacheKey = string;
+type RoomsCache = Map<CacheKey, RoomResponse[]>;
+
+type UseRoomsParams = {
+  selectedType: RoomType | "";
+  selectedBuilding: string;
+  minCapacity: string;
+};
 
 export function useRooms(
-  selectedType: string,
-  selectedBuilding: string,
-  minCapacity: string,
+  selectedType: UseRoomsParams["selectedType"],
+  selectedBuilding: UseRoomsParams["selectedBuilding"],
+  minCapacity: UseRoomsParams["minCapacity"],
 ) {
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
 
-  const cache = useRef(new Map<CacheKey, RoomResponse[]>());
-  const requestId = useRef(0);
+  const cache = useRef<RoomsCache>(new Map());
+  const requestId = useRef<number>(0);
 
-  const cacheKey = useMemo(() => {
-    return JSON.stringify({ selectedType, selectedBuilding, minCapacity });
+  const cacheKey = useMemo<CacheKey>(() => {
+    return JSON.stringify({
+      selectedType,
+      selectedBuilding,
+      minCapacity,
+    });
   }, [selectedType, selectedBuilding, minCapacity]);
 
   useEffect(() => {
-    const currentRequest = ++requestId.current;
-    const controller = new AbortController();
+    const currentRequest: number = ++requestId.current;
+    const controller: AbortController = new AbortController();
 
-    const loadRooms = async () => {
+    const loadRooms = async (): Promise<void> => {
       try {
         setError("");
 
@@ -38,11 +49,14 @@ export function useRooms(
         }
 
         const params = new URLSearchParams();
+
         if (selectedType) params.append("type", selectedType);
         if (selectedBuilding) params.append("building", selectedBuilding);
         if (minCapacity) params.append("minCapacity", minCapacity);
 
-        const endpoint = `/rooms${params.toString() ? `?${params}` : ""}`;
+        const endpoint: string = `/rooms${
+          params.toString() ? `?${params.toString()}` : ""
+        }`;
 
         const data = await api.get<RoomResponse[]>(endpoint, {
           signal: controller.signal,
@@ -51,13 +65,13 @@ export function useRooms(
         if (controller.signal.aborted) return;
         if (currentRequest !== requestId.current) return;
 
-        const result = data || [];
+        const result: RoomResponse[] = data ?? [];
 
         cache.current.set(cacheKey, result);
 
         setRooms(result);
         setIsInitialLoading(false);
-      } catch (err) {
+      } catch (err: unknown) {
         if (controller.signal.aborted) return;
 
         if (err instanceof APIError) {
@@ -71,13 +85,20 @@ export function useRooms(
     };
 
     loadRooms();
-    return () => controller.abort();
-  }, [cacheKey]);
 
-  const uniqueBuildings = useMemo(() => {
-    return [
-      ...new Set(rooms.map((r) => r.buildingName).filter(Boolean)),
-    ].sort();
+    return () => {
+      controller.abort();
+    };
+  }, [cacheKey, selectedType, selectedBuilding, minCapacity]);
+
+  const uniqueBuildings = useMemo<string[]>(() => {
+    return Array.from(
+      new Set(
+        rooms
+          .map((r: RoomResponse) => r.buildingName)
+          .filter((b): b is string => Boolean(b)),
+      ),
+    ).sort();
   }, [rooms]);
 
   return {

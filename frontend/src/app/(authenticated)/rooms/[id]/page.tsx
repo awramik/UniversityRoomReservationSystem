@@ -1,153 +1,278 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { api } from '@/src/app/lib/api-client';
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { addMinutes, format, isBefore, isToday, parseISO, set } from "date-fns";
+import { api } from "@/src/app/lib/api-client";
 import {
   RoomResponse,
   AvailabilityResponse,
   ReservationRequest,
   APIError,
-} from '@/src/app/lib/types';
+  ROOM_TYPES,
+} from "@/src/app/lib/types";
+import { Link } from "@/src/design-system/atoms/Link";
+import { LightCard } from "@/src/design-system/cards";
 import {
-  formatDateTimeDisplay,
-  parseDateTimeFromInput,
   calculateDurationHours,
   formatDateTimeForAPI,
-} from '@/src/app/lib/date-utils';
-import { Link } from '@/src/design-system/atoms/Link';
-import { LightCard } from '@/src/design-system/cards';
-import { ROOM_TYPES } from '@/src/app/lib/types';
+} from "@/src/app/lib/date-utils";
+import { Button } from "@/src/design-system/atoms/Button";
+import { Input } from "@/src/design-system/forms/Input";
+
+type FormValues = Omit<ReservationRequest, "roomId"> & {
+  date: string;
+};
+
+const WORK_START = 6;
+const WORK_END = 22;
+const SLOT_STEP = 15;
+const MIN_DURATION = 30;
+
+// ----------------------
+// utils
+// ----------------------
+
+function toDateTime(date: string, time: string) {
+  return parseISO(`${date}T${time}:00`);
+}
+
+function formatTime(date: Date) {
+  return format(date, "HH:mm");
+}
+
+function roundUpToStep(date: Date, step: number) {
+  const ms = step * 60 * 1000;
+  return new Date(Math.ceil(date.getTime() / ms) * ms);
+}
+
+// ----------------------
+// SLOT LOGIC (FIXED)
+// ----------------------
+
+function generateStartTimes(date: string) {
+  const parsedDate = parseISO(date);
+
+  const startBase = set(parsedDate, {
+    hours: WORK_START,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0,
+  });
+
+  const lastStart = set(parsedDate, {
+    hours: 21,
+    minutes: 30,
+    seconds: 0,
+    milliseconds: 0,
+  });
+
+  let cursor = startBase;
+
+  if (isToday(parsedDate)) {
+    const now = new Date();
+    const rounded = roundUpToStep(now, SLOT_STEP);
+    cursor = isBefore(rounded, startBase) ? startBase : rounded;
+  }
+
+  const result: string[] = [];
+
+  while (
+    isBefore(cursor, lastStart) ||
+    cursor.getTime() === lastStart.getTime()
+  ) {
+    result.push(formatTime(cursor));
+    cursor = addMinutes(cursor, SLOT_STEP);
+  }
+
+  return result;
+}
+
+function generateEndTimes(date: string, startTime: string) {
+  if (!date || !startTime) return [];
+
+  const parsedDate = parseISO(date);
+
+  const start = toDateTime(date, startTime);
+
+  const endLimit = set(parsedDate, {
+    hours: WORK_END,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0,
+  });
+
+  const result: string[] = [];
+
+  let cursor = addMinutes(start, MIN_DURATION);
+
+  while (
+    isBefore(cursor, endLimit) ||
+    cursor.getTime() === endLimit.getTime()
+  ) {
+    result.push(formatTime(cursor));
+    cursor = addMinutes(cursor, SLOT_STEP);
+  }
+
+  return result;
+}
+
+// ----------------------
+// PAGE
+// ----------------------
 
 export default function RoomDetailsPage() {
   const params = useParams();
   const router = useRouter();
-
   const roomId = params.id as string;
 
   const [room, setRoom] = useState<RoomResponse | null>(null);
-  const [isLoadingRoom, setIsLoadingRoom] = useState<boolean>(true);
-  const [roomError, setRoomError] = useState<string>('');
+  const [loadingRoom, setLoadingRoom] = useState(true);
+  const [roomError, setRoomError] = useState("");
 
-  const [startTime, setStartTime] = useState<string>('');
-  const [endTime, setEndTime] = useState<string>('');
-  const [purpose, setPurpose] = useState<string>('');
+  const [availability, setAvailability] = useState<AvailabilityResponse | null>(
+    null,
+  );
+  const [checking, setChecking] = useState(false);
 
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [submitError, setSubmitError] = useState<string>('');
-  const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [availability, setAvailability] =
-    useState<AvailabilityResponse | null>(null);
+  const { register, handleSubmit, watch, setValue } = useForm<FormValues>({
+    defaultValues: {
+      date: "",
+      startTime: "",
+      endTime: "",
+      purpose: "",
+    },
+  });
 
-  const [isCheckingAvailability, setIsCheckingAvailability] = useState<boolean>(false);
+  const date = watch("date");
+  const startTime = watch("startTime");
+  const endTime = watch("endTime");
+
+  // reset endTime when startTime changes
+  useEffect(() => {
+    setValue("endTime", "");
+  }, [startTime, setValue]);
+
+  // ----------------------
+  // LOAD ROOM
+  // ----------------------
 
   useEffect(() => {
     const run = async () => {
       try {
-        setIsLoadingRoom(true);
-        setRoomError('');
-
+        setLoadingRoom(true);
         const data = await api.get<RoomResponse>(`/rooms/${roomId}`);
         setRoom(data);
-      } catch (err) {
-        if (err instanceof APIError) {
-          setRoomError(err.message || 'Błąd podczas ładowania sali');
-        } else {
-          setRoomError('Błąd sieci');
-        }
+      } catch (e) {
+        setRoomError(e instanceof APIError ? e.message : "Błąd sieci");
       } finally {
-        setIsLoadingRoom(false);
+        setLoadingRoom(false);
       }
     };
 
     run();
   }, [roomId]);
 
-  // =========================
-  // CHECK AVAILABILITY
-  // =========================
+  // ----------------------
+  // AVAILABILITY
+  // ----------------------
 
   useEffect(() => {
     const run = async () => {
-      if (!startTime || !endTime) return;
+      if (!date || !startTime || !endTime) return;
 
       try {
-        setIsCheckingAvailability(true);
+        setChecking(true);
 
         const params = new URLSearchParams({
-          startTime: parseDateTimeFromInput(startTime).toISOString(),
-          endTime: parseDateTimeFromInput(endTime).toISOString(),
+          startTime: toDateTime(date, startTime).toISOString(),
+          endTime: toDateTime(date, endTime).toISOString(),
         });
 
         const data = await api.get<AvailabilityResponse>(
-          `/rooms/${roomId}/availability?${params.toString()}`
+          `/rooms/${roomId}/availability?${params.toString()}`,
         );
 
         setAvailability(data);
-      } catch (err) {
-        console.error(err);
+      } catch {
+        setAvailability(null);
       } finally {
-        setIsCheckingAvailability(false);
+        setChecking(false);
       }
     };
 
     run();
-  }, [startTime, endTime, roomId]);
+  }, [date, startTime, endTime, roomId]);
 
-  // =========================
+  // ----------------------
+  // OPTIONS
+  // ----------------------
+
+  const startOptions = useMemo(
+    () => (date ? generateStartTimes(date) : []),
+    [date],
+  );
+
+  const endOptions = useMemo(
+    () => (date && startTime ? generateEndTimes(date, startTime) : []),
+    [date, startTime],
+  );
+
+  const duration =
+    date && startTime && endTime
+      ? calculateDurationHours(
+          toDateTime(date, startTime).toISOString(),
+          toDateTime(date, endTime).toISOString(),
+        )
+      : 0;
+
+  // ----------------------
   // SUBMIT
-  // =========================
+  // ----------------------
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setSubmitError('');
+  const onSubmit = async (data: FormValues) => {
+    setSubmitError("");
     setSubmitSuccess(false);
 
-    if (!startTime || !endTime) {
-      setSubmitError('Wypełnij datę i czas');
-      return;
-    }
-
     if (!availability?.available) {
-      setSubmitError('Wybrana godzina nie jest dostępna');
+      setSubmitError("Ten termin jest niedostępny");
       return;
     }
 
     try {
-      setIsSubmitting(true);
+      setSubmitting(true);
 
-      const reservation: ReservationRequest = {
+      const payload: ReservationRequest = {
         roomId,
-        startTime: formatDateTimeForAPI(parseDateTimeFromInput(startTime)),
-        endTime: formatDateTimeForAPI(parseDateTimeFromInput(endTime)),
-        purpose: purpose || undefined,
+        startTime: formatDateTimeForAPI(toDateTime(data.date, data.startTime)),
+        endTime: formatDateTimeForAPI(toDateTime(data.date, data.endTime)),
+        purpose: data.purpose || undefined,
       };
 
-      await api.post('/reservations', reservation);
+      await api.post("/reservations", payload);
 
       setSubmitSuccess(true);
-      setStartTime('');
-      setEndTime('');
-      setPurpose('');
-
-      setTimeout(() => router.push('/reservations'), 2000);
-    } catch (err) {
-      if (err instanceof APIError) {
-        setSubmitError(err.message);
-      } else {
-        setSubmitError('Błąd podczas tworzenia rezerwacji');
-      }
+      setTimeout(() => router.push("/reservations"), 1200);
+    } catch (e) {
+      setSubmitError(e instanceof APIError ? e.message : "Błąd");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  if (isLoadingRoom) {
+  // ----------------------
+  // LOADING
+  // ----------------------
+
+  if (loadingRoom) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-contentSecondary">Ładowanie sali...</p>
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Ładowanie...
       </div>
     );
   }
@@ -155,190 +280,154 @@ export default function RoomDetailsPage() {
   if (roomError || !room) {
     return (
       <div className="space-y-4">
-        <Link href="/rooms" className="text-accent hover:underline">
-          ← Wróć do sal
-        </Link>
-
-        <div className="text-error">{roomError || 'Brak sali'}</div>
+        <Link href="/rooms">← Wróć</Link>
+        <p className="text-red-500">{roomError || "Brak sali"}</p>
       </div>
     );
   }
 
-  const duration =
-    startTime && endTime
-      ? calculateDurationHours(
-          parseDateTimeFromInput(startTime).toISOString(),
-          parseDateTimeFromInput(endTime).toISOString()
-        )
-      : 0;
+  // ----------------------
+  // UI
+  // ----------------------
 
   return (
     <div className="space-y-8">
-
-      {/* BACK */}
-      <Link
-        href="/rooms"
-        className="text-sm text-contentSecondary hover:text-accent transition"
-      >
+      <Link href="/rooms" className="text-sm text-gray-500 hover:text-black">
         ← Powrót do sal
       </Link>
 
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-
-        <div>
-          <h1 className="text-4xl font-bold text-contentPrimary">
-            {room.name}
-          </h1>
-
-          <p className="text-contentSecondary mt-1">
-            {room.buildingName}
-          </p>
-        </div>
-
-        <span className="px-3 py-1 text-sm rounded-full bg-accentSoft text-contentPrimary">
-          {ROOM_TYPES[room.roomType as keyof typeof ROOM_TYPES] ?? room.roomType}
-        </span>
-
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ROOM INFO */}
+        <div className="lg:col-span-2">
+          <LightCard className="space-y-5">
+            <div>
+              <h1 className="text-3xl font-bold">{room.name}</h1>
+              <p className="text-gray-500">{room.buildingName}</p>
+            </div>
 
-        {/* LEFT */}
-        <div className="lg:col-span-2 space-y-6">
-
-          <LightCard className='space-y-4'>
-
-            <div className="grid grid-cols-2 gap-6">
-
+            <div className="flex gap-8">
               <div>
-                <p className="text-contentTertiary text-sm">Pojemność</p>
-                <p className="text-3xl font-bold text-contentPrimary mt-1">
-                  {room.capacity}
-                </p>
+                <p className="text-xs text-gray-400">Pojemność</p>
+                <p className="text-xl font-semibold">{room.capacity}</p>
               </div>
 
               <div>
-                <p className="text-contentTertiary text-sm">Typ</p>
-                <p className="text-contentPrimary mt-2 font-medium">
-                  {ROOM_TYPES[room.roomType as keyof typeof ROOM_TYPES] ?? room.roomType}
+                <p className="text-xs text-gray-400">Typ</p>
+                <p className="text-xl font-semibold">
+                  {ROOM_TYPES[room.roomType as keyof typeof ROOM_TYPES] ??
+                    room.roomType}
                 </p>
               </div>
-
             </div>
 
             {room.description && (
-            <div>
-              <h2 className="text-sm text-contentTertiary mb-2">Opis</h2>
-              <p className="text-contentSecondary leading-relaxed">
+              <p className="text-gray-600 leading-relaxed">
                 {room.description}
               </p>
-            </div>
-          )}
+            )}
           </LightCard>
-
-          {/* AVAILABILITY */}
-          {availability && (
-            <div className="bg-backgroundSecondary border border-borderPrimary rounded-2xl p-6">
-
-              <h2 className="text-sm text-contentTertiary mb-3">
-                Dostępność
-              </h2>
-
-              {availability.available ? (
-                <p className="text-success font-medium">
-                  ● Dostępna
-                </p>
-              ) : (
-                <div className="space-y-2">
-
-                  <p className="text-error font-medium">
-                    ● Zajęta
-                  </p>
-
-                  {availability.conflicts?.map((c, i) => (
-                    <div
-                      key={i}
-                      className="text-sm px-3 py-2 rounded-lg bg-backgroundTertiary text-contentSecondary"
-                    >
-                      {formatDateTimeDisplay(c.startTime ?? '')} →{' '}
-                      {formatDateTimeDisplay(c.endTime ?? '')}
-                    </div>
-                  ))}
-
-                </div>
-              )}
-
-            </div>
-          )}
-
         </div>
 
-        {/* RIGHT */}
+        {/* BOOKING */}
         <div className="lg:col-span-1">
+          <LightCard className="space-y-5">
+            <h2 className="text-xl font-bold">Rezerwacja</h2>
 
-          <LightCard className="sticky top-24">
-
-            <h2 className="text-xl font-bold text-contentPrimary mb-6">
-              Rezerwacja
-            </h2>
+            {date && startTime && endTime && (
+              <div className="rounded-lg border p-3 text-sm">
+                {checking ? (
+                  <span className="text-gray-500">Sprawdzanie...</span>
+                ) : availability?.available ? (
+                  <span className="text-green-600 font-medium">✓ Dostępna</span>
+                ) : (
+                  <span className="text-red-500 font-medium">✗ Zajęta</span>
+                )}
+              </div>
+            )}
 
             {submitSuccess && (
-              <div className="mb-4 text-success bg-successSoft p-3 rounded-lg">
+              <div className="text-green-600 text-sm font-medium">
                 ✓ Rezerwacja utworzona
               </div>
             )}
 
             {submitError && (
-              <div className="mb-4 text-error bg-errorSoft p-3 rounded-lg">
-                {submitError}
-              </div>
+              <div className="text-red-500 text-sm">{submitError}</div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-
-              <input
-                type="datetime-local"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:ring-2 focus:ring-accent"
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+              <Input
+                type="date"
+                {...register("date")}
+                min={format(new Date(), "yyyy-MM-dd")}
+                className="w-full rounded-md border p-2"
+                onChange={(e) => {
+                  register("date").onChange(e);
+                  setValue("startTime", "");
+                  setValue("endTime", "");
+                  setAvailability(null);
+                }}
               />
 
-              <input
-                type="datetime-local"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:ring-2 focus:ring-accent"
-              />
+              {date && (
+                <select
+                  {...register("startTime")}
+                  className="w-full rounded-md border p-2"
+                  onChange={(e) => {
+                    register("startTime").onChange(e);
+                    setValue("endTime", "");
+                  }}
+                >
+                  <option value="">Wybierz start</option>
+                  {startOptions.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {startTime && (
+                <select
+                  {...register("endTime")}
+                  className="w-full rounded-md border p-2"
+                >
+                  <option value="">Wybierz koniec</option>
+                  {endOptions.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               {duration > 0 && (
-                <p className="text-sm text-contentSecondary">
+                <p className="text-xs text-gray-500">
                   ⏱ {duration.toFixed(1)}h
                 </p>
               )}
 
               <textarea
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value)}
-                rows={3}
-                placeholder="Cel rezerwacji..."
-                className="w-full px-3 py-2 rounded-lg border border-borderPrimary bg-backgroundPrimary text-contentPrimary focus:ring-2 focus:ring-accent"
+                {...register("purpose")}
+                className="w-full rounded-md border p-2"
+                placeholder="Cel rezerwacji (opcjonalnie)"
               />
 
-              <button
+              <Button
                 type="submit"
-                disabled={isSubmitting || !availability?.available}
-                className="w-full py-2.5 rounded-lg bg-buttonPrimary text-buttonPrimaryText hover:bg-buttonPrimaryHover transition disabled:opacity-50"
+                disabled={
+                  submitting ||
+                  !availability?.available ||
+                  !date ||
+                  !startTime ||
+                  !endTime
+                }
               >
-                {isSubmitting ? 'Rezerwowanie...' : 'Zarezerwuj'}
-              </button>
-
+                {submitting ? "Rezerwuję..." : "Zarezerwuj"}
+              </Button>
             </form>
-
           </LightCard>
-
         </div>
-
       </div>
     </div>
   );

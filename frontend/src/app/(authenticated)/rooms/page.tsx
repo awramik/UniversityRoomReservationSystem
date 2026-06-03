@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { ROOM_TYPES, RoomType } from "@/src/app/lib/types";
+import { useState, ChangeEvent } from "react";
+import { ROOM_TYPES, RoomType, RoomResponse } from "@/src/app/lib/types";
 import { LightCard } from "@/src/design-system/cards";
 import { Link } from "@/src/design-system/atoms/Link";
 import { useRooms } from "./_hooks/useRooms";
 
 export default function RoomsPage() {
-  const [selectedType, setSelectedType] = useState<string>("");
+  const [selectedType, setSelectedType] = useState<RoomType | "">("");
   const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const [minCapacity, setMinCapacity] = useState<string>("");
 
@@ -17,10 +17,22 @@ export default function RoomsPage() {
     minCapacity,
   );
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     setSelectedType("");
     setSelectedBuilding("");
     setMinCapacity("");
+  };
+
+  const handleTypeChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+    setSelectedType(e.target.value as RoomType | "");
+  };
+
+  const handleBuildingChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+    setSelectedBuilding(e.target.value);
+  };
+
+  const handleCapacityChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setMinCapacity(e.target.value);
   };
 
   return (
@@ -42,14 +54,16 @@ export default function RoomsPage() {
             <label className="text-xs text-contentTertiary">Typ sali</label>
             <select
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
+              onChange={handleTypeChange}
               className="w-full mt-1 px-3 py-2 rounded-lg border"
             >
               <option value="">Wszystkie</option>
-              <option value="LECTURE">Wykładowa</option>
-              <option value="LABORATORY">Laboratoryjna</option>
-              <option value="COMPUTER">Komputerowa</option>
-              <option value="CONFERENCE">Konferencyjna</option>
+
+              {Object.entries(ROOM_TYPES).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -57,11 +71,12 @@ export default function RoomsPage() {
             <label className="text-xs text-contentTertiary">Budynek</label>
             <select
               value={selectedBuilding}
-              onChange={(e) => setSelectedBuilding(e.target.value)}
+              onChange={handleBuildingChange}
               className="w-full mt-1 px-3 py-2 rounded-lg border"
             >
               <option value="">Wszystkie</option>
-              {uniqueBuildings.map((b) => (
+
+              {uniqueBuildings.map((b: string) => (
                 <option key={b} value={b}>
                   {b}
                 </option>
@@ -75,9 +90,9 @@ export default function RoomsPage() {
             </label>
             <input
               type="number"
-              min="1"
+              min={1}
               value={minCapacity}
-              onChange={(e) => setMinCapacity(e.target.value)}
+              onChange={handleCapacityChange}
               className="w-full mt-1 px-3 py-2 rounded-lg border"
             />
           </div>
@@ -85,7 +100,7 @@ export default function RoomsPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="h-[42px] px-4 rounded-lg border"
+            className="h-10.5 px-4 rounded-lg border"
           >
             Reset
           </button>
@@ -110,18 +125,19 @@ export default function RoomsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {rooms.map((room) => (
+          {rooms.map((room: RoomResponse) => (
             <Link key={room.id} href={`/rooms/${room.id}`}>
               <LightCard className="group hover:border-accentPrimary transition">
                 <h3 className="text-lg font-semibold">{room.name}</h3>
 
                 {room.roomType && (
                   <span className="text-xs px-2 py-1 rounded-full bg-accentSoft">
-                    {ROOM_TYPES[room.roomType as RoomType]}
+                    {ROOM_TYPES[room.roomType]}
                   </span>
                 )}
 
                 <p className="text-sm mt-1">{room.buildingName}</p>
+
                 <div className="text-sm">{room.capacity} miejsc</div>
 
                 {room.description && (
