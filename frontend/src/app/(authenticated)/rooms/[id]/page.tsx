@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "../../_components/Header";
-import { Breadcrumb } from "../../_components/Breadcrumb";
+import { Breadcrumb } from "../../../../design-system/navigation/Breadcrumb";
 import { useRoom } from "./_hooks/useRoom";
 import { useAvailability } from "./_hooks/useAvailability";
 import { useRoomForm } from "./_hooks/useRoomForm";

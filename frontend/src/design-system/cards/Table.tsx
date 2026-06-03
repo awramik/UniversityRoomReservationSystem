@@ -1,6 +1,8 @@
+"use client";
 import React from "react";
 import { cn } from "../utils";
 import { LightCard } from "./LightCard";
+import { useRouter } from "next/navigation";
 
 type TableProps = {
   children: React.ReactNode;
@@ -21,13 +23,6 @@ type SectionProps = {
   children: React.ReactNode;
 };
 
-type Align = "left" | "center" | "right";
-
-type HeadCellProps = {
-  children: React.ReactNode;
-  align?: Align;
-};
-
 function Head({ children }: SectionProps) {
   return (
     <thead className="bg-backgroundTertiary border-b border-borderTertiary">
@@ -41,14 +36,26 @@ function Body({ children }: SectionProps) {
 }
 
 function Row({
+  href,
   children,
   className,
 }: {
+  href?: string;
   children: React.ReactNode;
   className?: string;
 }) {
+  const router = useRouter();
+  const clickable = Boolean(href);
+
   return (
-    <tr className={cn("hover:bg-backgroundSecondary/50 transition", className)}>
+    <tr
+      onClick={() => href && router.push(href)}
+      className={cn(
+        "transition",
+        clickable && "cursor-pointer hover:bg-backgroundSecondary/50",
+        className,
+      )}
+    >
       {children}
     </tr>
   );
