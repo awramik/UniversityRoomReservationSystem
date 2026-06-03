@@ -1,5 +1,6 @@
 package com.university.room_reservation.dto;
 
+import com.university.room_reservation.model.Role;
 import com.university.room_reservation.model.User;
 import java.util.UUID;
 
@@ -9,7 +10,7 @@ public record UserProfileResponse(
         String name,
         String surname,
         String email,
-        String role
+        Role role
 ) {
     public static UserProfileResponse from(User user) {
         return new UserProfileResponse(
@@ -18,7 +19,7 @@ public record UserProfileResponse(
                 user.getName(),
                 user.getSurname(),
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole()
         );
     }
 }

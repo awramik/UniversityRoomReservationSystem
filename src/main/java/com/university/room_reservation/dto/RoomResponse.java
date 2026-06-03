@@ -1,6 +1,8 @@
 package com.university.room_reservation.dto;
 
 import com.university.room_reservation.model.Room;
+import com.university.room_reservation.model.RoomType;
+
 import java.util.UUID;
 
 public record RoomResponse(
@@ -8,7 +10,7 @@ public record RoomResponse(
         String name,
         String buildingName,
         int capacity,
-        String roomType,
+        RoomType roomType,
         String description
 ) {
     public static RoomResponse from(Room room) {
@@ -17,7 +19,7 @@ public record RoomResponse(
                 room.getName(),
                 room.getBuildingName(),
                 room.getCapacity(),
-                room.getRoomType().name(),
+                room.getRoomType(),
                 room.getDescription()
         );
     }
