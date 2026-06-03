@@ -47,7 +47,14 @@ export function BookingForm({
   const duration = getDurationParts(date, startTime, endTime);
   const noSlotsToday = date && startOptions.length === 0;
 
-  const { register, handleSubmit } = form;
+  const { register, handleSubmit, watch, formState } = form;
+
+  const dateVal = watch("date");
+  const startVal = watch("startTime");
+  const endVal = watch("endTime");
+
+  const isFormComplete = !!dateVal && !!startVal && !!endVal;
+  const isSubmitDisabled = submitting || !isFormComplete || !formState.isValid;
 
   return (
     <LightCard className="space-y-4">
@@ -121,11 +128,14 @@ export function BookingForm({
 
           <Field>
             <Label>Cel rezerwacji</Label>
-            <Textarea {...register("purpose")} />
+            <Textarea
+              {...register("purpose")}
+              placeholder="Cel rezerwacji..."
+            />
           </Field>
         </Fieldset>
 
-        <Button type="submit" className="w-full" disabled={submitting}>
+        <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
           Zarezerwuj
         </Button>
 
