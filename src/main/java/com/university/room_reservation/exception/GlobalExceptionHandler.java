@@ -96,6 +96,12 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(HttpStatus.NOT_FOUND.value(), "No route: " + request.getRequestURI());
     }
 
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleAuthenticationException(org.springframework.security.core.AuthenticationException ex) {
+        return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Invalid username or password");
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGeneric(Exception ex) {
