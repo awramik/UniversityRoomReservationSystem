@@ -8,14 +8,9 @@ import {
   AdminBlockRequest,
   APIError,
 } from "@/src/app/lib/types";
-import {
-  formatDateTimeForAPI,
-  parseDateTimeFromInput,
-} from "@/src/app/lib/date-utils";
 import { useAuth } from "@/src/app/auth/auth-context";
 import { Button } from "@/src/design-system/atoms/Button";
 import { LightCard } from "@/src/design-system/cards/LightCard";
-import { H2 } from "@/src/design-system/typography/Heading";
 import { P2 } from "@/src/design-system/typography/Paragraph";
 import { Header } from "../../_components/Header";
 
@@ -34,8 +29,6 @@ export default function AdminReservationsPage() {
   const { user } = useAuth();
 
   const [reservations, setReservations] = useState<ReservationResponse[]>([]);
-  const reservationsOnly = reservations.filter((r) => !("purpose" in r));
-  const adminBlocks = reservations.filter((r) => "purpose" in r);
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
