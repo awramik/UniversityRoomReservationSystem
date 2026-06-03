@@ -14,5 +14,8 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7"
+  },
+  "dependencies": {
+    "react-hook-form": "^7.77.0"
   }
 }
