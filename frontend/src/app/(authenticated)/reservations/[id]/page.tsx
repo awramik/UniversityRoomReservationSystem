@@ -222,11 +222,9 @@ export default function ReservationDetailsPage() {
               </div>
 
               {room.description && (
-                <div className="pt-2">
+                <div className="space-y-2 pt-4">
                   <H3>Opis sali</H3>
-                  <P3 className="text-contentSecondary mt-2">
-                    {room.description}
-                  </P3>
+                  <P2 className="text-contentSecondary">{room.description}</P2>
                 </div>
               )}
             </section>
@@ -235,8 +233,8 @@ export default function ReservationDetailsPage() {
           {/* CEL */}
           {reservation.purpose && (
             <section className="space-y-2">
-              <H2>Cel rezerwacji</H2>
-              <P1>{reservation.purpose}</P1>
+              <H3>Cel rezerwacji</H3>
+              <P2 className="text-contentSecondary">{reservation.purpose}</P2>
             </section>
           )}
 
