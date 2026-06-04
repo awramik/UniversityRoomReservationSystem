@@ -1,16 +1,30 @@
 "use client";
 
-import { ReservationResponse, RESERVATION_STATUS } from "@/src/app/lib/types";
+import {
+  ReservationResponse,
+  RESERVATION_STATUS,
+  RESERVATION_TYPES,
+} from "@/src/app/lib/types";
 import { formatDateTimeDisplay } from "@/src/app/lib/date-utils";
 import { Button } from "@/src/design-system/atoms/Button";
 import { Table } from "@/src/design-system/cards/Table";
 import { Badge, type BadgeColor } from "@/src/design-system/atoms/Badge";
 
+const STATUS_COLORS = {
+  ACTIVE: "lime",
+  PAST: "stone",
+  CANCELLED: "red",
+};
+
+const RESERVATION_TYPE_COLORS = {
+  BOOKING: "gray",
+  ADMIN_BLOCK: "orange",
+};
+
 type Props = {
   reservations: ReservationResponse[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string, type: ReservationResponse["type"]) => void;
   deletingId: string | null;
-  statusColors: Record<string, string>;
 };
 
 function toStatus(
@@ -24,7 +38,6 @@ export function ReservationsTable({
   reservations,
   onDelete,
   deletingId,
-  statusColors,
 }: Props) {
   return (
     <Table>
@@ -35,6 +48,7 @@ export function ReservationsTable({
           <Table.HeadCell>Od</Table.HeadCell>
           <Table.HeadCell>Do</Table.HeadCell>
           <Table.HeadCell>Status</Table.HeadCell>
+          <Table.HeadCell>Typ</Table.HeadCell>
           <Table.HeadCell align="center">Akcje</Table.HeadCell>
         </tr>
       </Table.Head>
@@ -63,8 +77,22 @@ export function ReservationsTable({
 
               <Table.Cell>
                 {status && (
-                  <Badge color={statusColors[status] as BadgeColor}>
+                  <Badge color={STATUS_COLORS[status] as BadgeColor}>
                     {RESERVATION_STATUS[status]}
+                  </Badge>
+                )}
+              </Table.Cell>
+
+              <Table.Cell className="text-contentSecondary">
+                {r.type && RESERVATION_TYPES[r.type] && (
+                  <Badge
+                    color={
+                      RESERVATION_TYPE_COLORS[
+                        r.type as keyof typeof RESERVATION_TYPE_COLORS
+                      ] as BadgeColor
+                    }
+                  >
+                    {RESERVATION_TYPES[r.type]}
                   </Badge>
                 )}
               </Table.Cell>
@@ -74,7 +102,7 @@ export function ReservationsTable({
                   <Button
                     destructive
                     size="sm"
-                    onClick={() => onDelete(r.id!)}
+                    onClick={() => onDelete(r.id!, r.type)}
                     disabled={deletingId === r.id}
                   >
                     {deletingId === r.id ? "Usuwanie..." : "Usuń"}

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { api } from "@/src/app/lib/api-client";
 import {
   ReservationResponse,
+  ReservationType,
+  RESERVATION_TYPES,
   RoomResponse,
   AdminBlockRequest,
   APIError,
@@ -12,18 +14,14 @@ import { useAuth } from "@/src/app/auth/auth-context";
 import { Button } from "@/src/design-system/atoms/Button";
 import { LightCard } from "@/src/design-system/cards/LightCard";
 import { P2 } from "@/src/design-system/typography/Paragraph";
+import { Select } from "@/src/design-system/forms/Select";
 import { Header } from "../../_components/Header";
 
 import { ReservationsTable } from "./_components/ReservationsTable";
 import { BlockForm } from "./_components/BlockForm";
 import { ReservationsTabs } from "../../reservations/_components/ReservationsTabs";
 import { useReservationTabs } from "../../reservations/_hooks/useReservationTabs";
-
-const STATUS_COLORS = {
-  ACTIVE: "lime",
-  PAST: "stone",
-  CANCELLED: "red",
-};
+import { Field, Label } from "@/src/design-system/forms/Fieldset";
 
 export default function AdminReservationsPage() {
   const { user } = useAuth();
@@ -37,11 +35,17 @@ export default function AdminReservationsPage() {
 
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<ReservationType | "">("");
 
   const didInitRef = useRef(false);
 
+  const reservationsByType = useMemo(() => {
+    if (!typeFilter) return reservations;
+    return reservations.filter((r) => r.type === typeFilter);
+  }, [reservations, typeFilter]);
+
   const { activeTab, setActiveTab, filteredReservations } =
-    useReservationTabs(reservations);
+    useReservationTabs(reservationsByType);
 
   const loadData = useCallback(async () => {
     try {
@@ -77,16 +81,31 @@ export default function AdminReservationsPage() {
     loadData();
   }, [user?.role, loadData]);
 
-  const handleDeleteReservation = async (reservationId: string) => {
-    if (!confirm("Na pewno chcesz usunąć tę rezerwację?")) return;
+  const handleDeleteReservation = async (
+    reservationId: string,
+    type: ReservationResponse["type"],
+  ) => {
+    const isBlock = type === "ADMIN_BLOCK";
+    const message = isBlock
+      ? "Na pewno chcesz usunąć ten blok?"
+      : "Na pewno chcesz usunąć tę rezerwację?";
+    if (!confirm(message)) return;
 
     try {
       setDeletingId(reservationId);
-      await api.delete(`/reservations/${reservationId}`);
+      const path = isBlock
+        ? `/reservations/blocks/${reservationId}`
+        : `/reservations/${reservationId}`;
+      await api.delete(path);
       loadData();
     } catch (err) {
       if (err instanceof APIError) {
-        setError(err.message || "Błąd podczas usuwania rezerwacji");
+        setError(
+          err.message ||
+            (isBlock
+              ? "Błąd podczas usuwania bloku"
+              : "Błąd podczas usuwania rezerwacji"),
+        );
       }
     } finally {
       setDeletingId(null);
@@ -133,11 +152,34 @@ export default function AdminReservationsPage() {
         />
       )}
 
-      <ReservationsTabs
-        value={activeTab}
-        onChange={setActiveTab}
-        show={!isLoading && reservations.length > 0}
-      />
+      <div className="flex items-center gap-4 w-full justify-between">
+        <ReservationsTabs
+          value={activeTab}
+          onChange={setActiveTab}
+          show={!isLoading && reservations.length > 0}
+        />
+
+        {!isLoading && (
+          <Field className="flex items-center gap-4 max-w-88 w-full">
+            <Label className="text-contentTertiary text-nowrap">
+              Typ rezerwacji
+            </Label>
+            <Select
+              value={typeFilter}
+              onChange={(e) =>
+                setTypeFilter(e.target.value as ReservationType | "")
+              }
+            >
+              <option value="">Wszystkie typy</option>
+              {Object.entries(RESERVATION_TYPES).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
+      </div>
 
       {isLoading ? (
         <div className="text-center text-contentSecondary py-8">
@@ -155,7 +197,6 @@ export default function AdminReservationsPage() {
             reservations={filteredReservations}
             onDelete={handleDeleteReservation}
             deletingId={deletingId}
-            statusColors={STATUS_COLORS}
           />
         </>
       )}

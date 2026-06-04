@@ -19,7 +19,6 @@ public class ReservationSpecs {
             LocalDate startDate, LocalDate endDate, UUID roomId, ReservationStatus status, String username) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("type"), ReservationType.BOOKING));
             if (startDate != null)
                 predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), startDate.atStartOfDay()));
             if (endDate != null)
