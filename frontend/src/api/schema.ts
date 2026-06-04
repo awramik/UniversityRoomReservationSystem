@@ -266,6 +266,8 @@ export interface components {
       purpose?: string;
       /** @enum {string} */
       status?: "ACTIVE" | "PAST" | "CANCELLED";
+      /** @enum {string} */
+      type?: "BOOKING" | "ADMIN_BLOCK";
     };
     AdminBlockRequest: {
       /** Format: uuid */

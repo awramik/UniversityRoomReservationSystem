@@ -25,7 +25,7 @@ public interface ReservationService {
 
     List<Reservation> listMyReservations(String username);
 
-    ReservationDetailResponse getReservationDetail(UUID reservationId, boolean isAdmin);
+    ReservationDetailResponse getReservationDetail(UUID reservationId, String callerUsername, boolean isAdmin);
 
     AvailabilityResponse checkAvailability(UUID roomId, LocalDateTime start, LocalDateTime end);
 }

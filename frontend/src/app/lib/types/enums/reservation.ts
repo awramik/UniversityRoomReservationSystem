@@ -1,4 +1,5 @@
 import type { components } from "@/src/api/schema";
+import { ReservationResponse } from "../dto/reservation";
 
 export type ReservationStatus = NonNullable<
   components["schemas"]["ReservationDetailResponse"]["status"]
@@ -11,9 +12,9 @@ export const RESERVATION_STATUS: Record<ReservationStatus, string> = {
 };
 
 // private backend type - not used in API
-export type ReservationType = "BOOKING" | "ADMIN_BLOCK";
+export type ReservationType = ReservationResponse["type"];
 
-export const RESERVATION_TYPES: Record<ReservationType, string> = {
+export const RESERVATION_TYPES: Record<NonNullable<ReservationType>, string> = {
   BOOKING: "Rezerwacja",
   ADMIN_BLOCK: "Blokada administracyjna",
 };

@@ -86,7 +86,7 @@ public class ReservationController {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     public ReservationDetailResponse getReservation(@PathVariable UUID id, Authentication authentication) {
-        return reservationService.getReservationDetail(id, isAdmin(authentication));
+        return reservationService.getReservationDetail(id, authentication.getName(), isAdmin(authentication));
     }
 
     @PostMapping
