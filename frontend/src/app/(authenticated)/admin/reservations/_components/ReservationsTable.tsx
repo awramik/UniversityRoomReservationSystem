@@ -58,7 +58,7 @@ export function ReservationsTable({
           const status = toStatus(r.status) ? r.status : null;
 
           return (
-            <Table.Row key={r.id ?? index}>
+            <Table.Row key={r.id ?? index} href={`/reservations/${r.id}`}>
               <Table.Cell className="font-medium text-contentPrimary">
                 {r.roomName}
               </Table.Cell>

@@ -114,7 +114,7 @@ export default function ReservationDetailsPage() {
 
   if (error || !reservation) {
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <Breadcrumb href="/reservations">Wróć do listy rezerwacji</Breadcrumb>
 
         <div className="border border-error bg-errorSoft text-error px-4 py-3 rounded-xl">

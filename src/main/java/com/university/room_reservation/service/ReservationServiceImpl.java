@@ -151,10 +151,13 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional
-    public ReservationDetailResponse getReservationDetail(UUID reservationId, boolean isAdmin) {
+    public ReservationDetailResponse getReservationDetail(UUID reservationId, String callerUsername, boolean isAdmin) {
         reservationRepository.markAllExpiredAsPast(LocalDateTime.now());
         Reservation reservation = reservationRepository.findByIdAndType(reservationId, ReservationType.BOOKING)
                 .orElseThrow(() -> new ReservationNotFoundException(reservationId));
+        if (!isAdmin && !reservation.getBookerName().equals(callerUsername)) {
+            throw new ReservationNotFoundException(reservationId);
+        }
         if (isAdmin) {
             var booker = userRepository.findByUsername(reservation.getBookerName())
                     .orElseThrow(() -> new UserNotFoundException(reservation.getBookerName()));
