@@ -51,7 +51,7 @@ public class ReservationServiceImpl implements ReservationService {
             throw new InvalidTimeRangeException("End time must be after start time");
         }
 
-        var room = roomRepository.findById(roomId)
+        var room = roomRepository.findWithLockById(roomId)
                 .orElseThrow(() -> new RoomNotFoundException(roomId));
 
         if (role == Role.STUDENT && LECTURER_ONLY_TYPES.contains(room.getRoomType())) {
