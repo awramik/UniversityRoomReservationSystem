@@ -11,7 +11,7 @@ import { BookingForm } from "./_components/BookingForm";
 import { RoomInfo } from "./_components/RoomInfo";
 import { api } from "@/src/app/lib/api-client";
 import { APIError, ReservationRequest } from "@/src/app/lib/types";
-import { toDateTime } from "./_utils/time";
+import { toApiDateTime } from "./_utils/time";
 import { FormValues } from "./_hooks/useRoomForm";
 
 export default function RoomDetailsPage() {
@@ -53,8 +53,8 @@ export default function RoomDetailsPage() {
 
       await api.post("/reservations", {
         roomId,
-        startTime: toDateTime(data.date, data.startTime).toISOString(),
-        endTime: toDateTime(data.date, data.endTime).toISOString(),
+        startTime: toApiDateTime(data.date, data.startTime),
+        endTime: toApiDateTime(data.date, data.endTime),
         purpose: data.purpose || undefined,
       } satisfies ReservationRequest);
 
