@@ -60,7 +60,7 @@ export function ReservationsTable({
           return (
             <Table.Row key={r.id ?? index} href={`/reservations/${r.id}`}>
               <Table.Cell className="font-medium text-contentPrimary">
-                {r.roomName}
+                {r.roomName ?? "Sala usunięta"}
               </Table.Cell>
 
               <Table.Cell className="text-contentSecondary">
