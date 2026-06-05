@@ -1,3 +1,5 @@
+<div class="markdown-body">
+
 # Dokumentacja projektu
 Autorzy: Magdalena Bernat, Wiktoria Awramik, Krzysztof Czerenko
 
@@ -456,3 +458,5 @@ Swagger UI jest dostępny pod adresem:
 ## 8. Podsumowanie
 
 Projekt realizuje kompletny system rezerwacji sal uczelnianych z podziałem na backend, frontend i warstwę testową. Zastosowane rozwiązania - takie jak architektura warstwowa, JWT, DTO, Specification Pattern, Testcontainers i własny design system - pokazują praktyczne wykorzystanie współczesnych narzędzi i wzorców stosowanych w aplikacjach webowych.
+
+</div>
