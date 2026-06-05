@@ -83,7 +83,6 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* SORTING BAR (NOWE UI - bez karty) */}
       {!isLoading && users.length > 0 && (
         <Field className="max-w-sm">
           <Label className="text-contentSecondary">Sortowanie</Label>

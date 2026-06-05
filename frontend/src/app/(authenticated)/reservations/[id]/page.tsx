@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/src/app/lib/api-client";
 import {
   ReservationDetailResponse,
@@ -54,7 +54,10 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 export default function ReservationDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const reservationId = params.id as string;
+  const fromAdmin = searchParams.get("from") === "admin";
+  const listHref = fromAdmin ? "/admin/reservations" : "/reservations";
 
   const [reservation, setReservation] =
     useState<ReservationDetailResponse | null>(null);
@@ -93,7 +96,7 @@ export default function ReservationDetailsPage() {
     try {
       setIsCancelling(true);
       await api.delete(`/reservations/${reservationId}`);
-      router.push("/reservations");
+      router.push(listHref);
     } catch (err) {
       if (err instanceof APIError) {
         setError(err.message || "Błąd podczas anulowania rezerwacji");
@@ -115,7 +118,7 @@ export default function ReservationDetailsPage() {
   if (error || !reservation) {
     return (
       <div className="flex flex-col gap-4">
-        <Breadcrumb href="/reservations">Wróć do listy rezerwacji</Breadcrumb>
+        <Breadcrumb href={listHref}>Wróć do listy rezerwacji</Breadcrumb>
 
         <div className="border border-error bg-errorSoft text-error px-4 py-3 rounded-xl">
           {error || "Rezerwacja nie znaleziona"}
@@ -140,7 +143,7 @@ export default function ReservationDetailsPage() {
     <div className="w-full flex flex-col gap-6">
       <Header title="Szczegóły rezerwacji" />
 
-      <Breadcrumb href="/reservations">Wróć do listy rezerwacji</Breadcrumb>
+      <Breadcrumb href={listHref}>Wróć do listy rezerwacji</Breadcrumb>
 
       {/* CARD */}
       <div className="flex justify-center">
@@ -175,7 +178,6 @@ export default function ReservationDetailsPage() {
             )}
           </div>
 
-          {/* TERMIN */}
           <section className="space-y-4">
             <H2>Termin</H2>
 
@@ -202,7 +204,6 @@ export default function ReservationDetailsPage() {
             </div>
           </section>
 
-          {/* SALA */}
           {room && (
             <section className="space-y-4">
               <H2>Sala</H2>
@@ -230,7 +231,6 @@ export default function ReservationDetailsPage() {
             </section>
           )}
 
-          {/* CEL */}
           {reservation.purpose && (
             <section className="space-y-2">
               <H3>Cel rezerwacji</H3>
@@ -238,7 +238,6 @@ export default function ReservationDetailsPage() {
             </section>
           )}
 
-          {/* REZERWUJĄCY */}
           {reservation.booker && (
             <section className="space-y-2">
               <H2>Rezerwujący</H2>

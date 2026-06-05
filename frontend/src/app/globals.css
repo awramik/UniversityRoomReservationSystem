@@ -25,31 +25,31 @@
 }
 
 @theme {
-  --color-backgroundPrimary: #F3EFE7;  /* złamana ciepła biel */
-  --color-backgroundSecondary: #E7E1D6; /* karty / surface */
-  --color-backgroundTertiary: #D8D0C2;  /* bardziej wyraźne sekcje / panele */
+  --color-backgroundPrimary: #F3EFE7;  
+  --color-backgroundSecondary: #E7E1D6; 
+  --color-backgroundTertiary: #D8D0C2;  
 
-  --color-contentPrimary: #1F2A1F;   /* główny tekst – ciemna oliwka */
-  --color-contentSecondary: #4B554B; /* mniej ważny tekst */
-  --color-contentTertiary: #7A827A;  /* placeholdery / disabled */
-  --color-contentInverted: #FFFFFF; /* tekst na ciemnym tle */
+  --color-contentPrimary: #1F2A1F;   
+  --color-contentSecondary: #4B554B; 
+  --color-contentTertiary: #7A827A;  
+  --color-contentInverted: #FFFFFF; 
 
-  --color-borderPrimary: #CFC7B8; /* standardowe separacje */
-  --color-borderSecondary: #B8B0A1; /* karty / inputy */
-  --color-borderTertiary: #9F9687;  /* mocniejsze sekcje / active panels */
+  --color-borderPrimary: #CFC7B8; 
+  --color-borderSecondary: #B8B0A1; 
+  --color-borderTertiary: #9F9687;  
 
   --color-accentPrimary: #5C6B4F;
-  --color-accentBase: #8C7A4F;        /* piaskowe złoto */
-  --color-accentHover: #7A6A43;   /* hover */
-  --color-accentSoft: #D6C7A3;    /* tła highlightów / tagi */
+  --color-accentBase: #8C7A4F;        
+  --color-accentHover: #7A6A43;   
+  --color-accentSoft: #D6C7A3;    
 
-  --color-success: #5C7A5A;      /* stonowana zieleń */
+  --color-success: #5C7A5A;      
   --color-successSoft: #DCE7DA;
 
-  --color-error: #8E4A4A;        /* bordo czerwone */
+  --color-error: #8E4A4A;        
   --color-errorSoft: #F0DADA;
 
-  --color-buttonColor: #5C6B4F;        /* oliwka */
+  --color-buttonColor: #5C6B4F;        
   --color-buttonColorHover: #4F5C44;
   --color-buttonText: #F3EFE7;
 
@@ -61,11 +61,11 @@
   --color-buttonGhostHover: #F0EBE4;
   --color-buttonGhostText: #4B554B;
 
-  --color-badgeOlive: #5C6B4F;   /* admin / system */
-  --color-badgeSand: #A08C5A;    /* lecture rooms */
-  --color-badgeForest: #4F6B5C;  /* laboratory */
-  --color-badgeClay: #A06B4F;    /* computer rooms */
-  --color-badgeStone: #6B6B6B;   /* student / neutral */
+  --color-badgeOlive: #5C6B4F;   
+  --color-badgeSand: #A08C5A;   
+  --color-badgeForest: #4F6B5C;  
+  --color-badgeClay: #A06B4F;    
+  --color-badgeStone: #6B6B6B;   
 
   --color-surface: #FFFFFF;
   --color-overlay: rgba(31, 42, 31, 0.05);

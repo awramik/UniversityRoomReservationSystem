@@ -47,14 +47,17 @@ export function BookingForm({
   const duration = getDurationParts(date, startTime, endTime);
   const noSlotsToday = date && startOptions.length === 0;
 
-  const { register, handleSubmit, watch, formState } = form;
+  const { register, handleSubmit, watch } = form;
+
+  const today = new Date().toLocaleDateString("en-CA");
 
   const dateVal = watch("date");
   const startVal = watch("startTime");
   const endVal = watch("endTime");
 
+  const isPastDate = !!dateVal && dateVal < today;
   const isFormComplete = !!dateVal && !!startVal && !!endVal;
-  const isSubmitDisabled = submitting || !isFormComplete || !formState.isValid;
+  const isSubmitDisabled = submitting || !isFormComplete || isPastDate;
 
   return (
     <LightCard className="space-y-4">
@@ -62,10 +65,15 @@ export function BookingForm({
         <Fieldset>
           <Field>
             <Label>Data rezerwacji</Label>
-            <Input type="date" {...register("date")} />
+            <Input type="date" min={today} {...register("date")} />
+            {isPastDate && (
+              <P3 className="text-error mt-2">
+                Data nie może być z przeszłości
+              </P3>
+            )}
           </Field>
 
-          {date && (
+          {date && !isPastDate && (
             <>
               {noSlotsToday ? (
                 <P3 className="text-error">

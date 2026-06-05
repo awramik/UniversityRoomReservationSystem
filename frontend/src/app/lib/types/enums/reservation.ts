@@ -11,7 +11,6 @@ export const RESERVATION_STATUS: Record<ReservationStatus, string> = {
   CANCELLED: "Anulowana",
 };
 
-// private backend type - not used in API
 export type ReservationType = ReservationResponse["type"];
 
 export const RESERVATION_TYPES: Record<NonNullable<ReservationType>, string> = {
