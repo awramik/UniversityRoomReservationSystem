@@ -1,5 +1,6 @@
 import { ChangeEvent } from "react";
-import { ROOM_TYPES, RoomType } from "@/src/app/lib/types";
+import { getBookableRoomTypes } from "@/src/app/lib/booking-limits";
+import { ROOM_TYPES, RoomType, UserRole } from "@/src/app/lib/types";
 import { LightCard } from "@/src/design-system/cards/LightCard";
 import { Fieldset, Field, Label } from "@/src/design-system/forms/Fieldset";
 import { Input } from "@/src/design-system/forms/Input";
@@ -12,6 +13,7 @@ type FilterBarProps = {
   selectedBuilding: string;
   minCapacity: string;
   uniqueBuildings: string[];
+  userRole?: UserRole;
 
   onTypeChange: (e: ChangeEvent<HTMLSelectElement>) => void;
   onBuildingChange: (e: ChangeEvent<HTMLSelectElement>) => void;
@@ -24,6 +26,7 @@ export function FilterBar({
   selectedBuilding,
   minCapacity,
   uniqueBuildings,
+  userRole,
   onTypeChange,
   onBuildingChange,
   onCapacityChange,
@@ -37,9 +40,9 @@ export function FilterBar({
           <Label className="text-contentTertiary">Typ sali</Label>
           <Select value={selectedType} onChange={onTypeChange}>
             <option value="">Dowolna</option>
-            {Object.entries(ROOM_TYPES).map(([value, label]) => (
+            {getBookableRoomTypes(userRole).map((value) => (
               <option key={value} value={value}>
-                {label}
+                {ROOM_TYPES[value]}
               </option>
             ))}
           </Select>

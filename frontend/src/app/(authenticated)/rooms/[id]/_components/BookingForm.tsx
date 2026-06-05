@@ -27,6 +27,7 @@ type Props = {
   submitting: boolean;
   submitError: string;
   success: boolean;
+  maxDurationHours?: number;
 };
 
 export function BookingForm({
@@ -40,11 +41,16 @@ export function BookingForm({
   submitting,
   submitError,
   success,
+  maxDurationHours,
 }: Props) {
   const startOptions = date ? generateStartTimes(date) : [];
   const endOptions = date && startTime ? generateEndTimes(date, startTime) : [];
 
   const duration = getDurationParts(date, startTime, endTime);
+  const exceedsDuration =
+    maxDurationHours != null &&
+    duration != null &&
+    Math.floor(duration.totalMinutes / 60) > maxDurationHours;
   const noSlotsToday = date && startOptions.length === 0;
 
   const { register, handleSubmit, watch } = form;
@@ -57,7 +63,8 @@ export function BookingForm({
 
   const isPastDate = !!dateVal && dateVal < today;
   const isFormComplete = !!dateVal && !!startVal && !!endVal;
-  const isSubmitDisabled = submitting || !isFormComplete || isPastDate;
+  const isSubmitDisabled =
+    submitting || !isFormComplete || isPastDate || exceedsDuration;
 
   return (
     <LightCard className="space-y-4">
@@ -131,6 +138,12 @@ export function BookingForm({
               <ClockIcon className="h-4 w-4" />
               Czas: {duration.hours > 0 && `${duration.hours}h `}
               {duration.mins > 0 && `${duration.mins}min`}
+            </P3>
+          )}
+
+          {exceedsDuration && maxDurationHours != null && (
+            <P3 className="text-error">
+              Maksymalny czas rezerwacji to {maxDurationHours} godz.
             </P3>
           )}
 

@@ -5,7 +5,9 @@ import { ApiError } from "next/dist/server/api-utils";
 import { useState } from "react";
 import { Button } from "@/src/design-system/atoms/Button";
 import { P3 } from "@/src/design-system/typography/Paragraph";
+import { WeeklyLimitNotice } from "../_components/WeeklyLimitNotice";
 import { Header } from "../_components/Header";
+import { useBookingLimits } from "../_hooks/useBookingLimits";
 import { useReservations } from "./_hooks/useReservations";
 import { useReservationTabs } from "./_hooks/useReservationTabs";
 import { ReservationsTable } from "./_components/ReservationsTable";
@@ -19,6 +21,8 @@ export default function ReservationsPage() {
     useReservationTabs(reservations);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const { limits, weeklyLimitReached } = useBookingLimits();
 
   const handleCancel = async (id: string) => {
     if (!confirm("Na pewno chcesz anulować tę rezerwację?")) return;
@@ -47,6 +51,10 @@ export default function ReservationsPage() {
           + Nowa rezerwacja
         </Button>
       </Header>
+
+      {weeklyLimitReached && limits && (
+        <WeeklyLimitNotice maxPerWeek={limits.maxPerWeek} />
+      )}
 
       {error && (
         <div className="rounded-xl border border-error bg-errorSoft text-error px-4 py-3">
