@@ -20,10 +20,11 @@ public record ReservationResponse(
         ReservationType type
 ) {
     public static ReservationResponse from(Reservation reservation) {
+        var room = reservation.getRoom();
         return new ReservationResponse(
                 reservation.getId(),
-                reservation.getRoom().getId(),
-                reservation.getRoom().getName(),
+                room != null ? room.getId() : null,
+                room != null ? room.getName() : null,
                 reservation.getStartTime(),
                 reservation.getEndTime(),
                 reservation.getBookerName(),
@@ -34,10 +35,11 @@ public record ReservationResponse(
     }
 
     public static ReservationResponse fromPublic(Reservation reservation) {
+        var room = reservation.getRoom();
         return new ReservationResponse(
                 reservation.getId(),
-                reservation.getRoom().getId(),
-                reservation.getRoom().getName(),
+                room != null ? room.getId() : null,
+                room != null ? room.getName() : null,
                 reservation.getStartTime(),
                 reservation.getEndTime(),
                 null,
