@@ -480,6 +480,62 @@ class ReservationControllerIntegrationTest extends BaseIntegrationTest {
                     .andExpect(jsonPath("$.status").value(404))
                     .andExpect(jsonPath("$.error").value("User not found: deleted_user"));
         }
+
+        @Test
+        @DisplayName("Szczegóły: Pomyślne pobranie własnych szczegółów rezerwacji przez studenta (uproszczony widok publiczny)")
+        void shouldAllowStudentToGetOwnReservationDetails() throws Exception {
+            // Sprawdza, czy student może pobrać szczegóły własnej rezerwacji. Widok powinien być uproszczony (brak bookera).
+            Room room = new Room("Room C", 25, RoomType.COMPUTER, "Building C");
+            room = roomRepository.save(room);
+
+            LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+            LocalDateTime end = start.plusHours(2);
+
+            Reservation res = new Reservation(room, start, end, STUDENT_USERNAME, ReservationType.BOOKING, "Own booking");
+            res.setStatus(ReservationStatus.ACTIVE);
+            res = reservationRepository.save(res);
+
+            mockMvc.perform(get("/reservations/" + res.getId())
+                            .header("Authorization", token))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(res.getId().toString()))
+                    .andExpect(jsonPath("$.purpose").value("Own booking"))
+                    .andExpect(jsonPath("$.booker").doesNotExist());
+        }
+
+        @Test
+        @DisplayName("Szczegóły: Zwrot statusu 404 (ReservationNotFound) przy próbie pobrania cudzej rezerwacji przez studenta")
+        void shouldReturn404WhenStudentGetsSomeoneElsesReservationDetails() throws Exception {
+            // Sprawdza, czy próba pobrania szczegółów cudzej rezerwacji przez studenta kończy się statusem 404.
+            Room room = new Room("Room C", 25, RoomType.COMPUTER, "Building C");
+            room = roomRepository.save(room);
+
+            LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+            LocalDateTime end = start.plusHours(2);
+
+            Reservation res = new Reservation(room, start, end, "someone_else", ReservationType.BOOKING, "Someone else's booking");
+            res.setStatus(ReservationStatus.ACTIVE);
+            res = reservationRepository.save(res);
+
+            mockMvc.perform(get("/reservations/" + res.getId())
+                            .header("Authorization", token))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andExpect(jsonPath("$.error").value("Rezerwacja nie znaleziona: " + res.getId()));
+        }
+
+        @Test
+        @DisplayName("Szczegóły: Zwrot statusu 404 (ReservationNotFound) przy próbie pobrania nieistniejącej rezerwacji")
+        void shouldReturn404WhenGettingNonExistentReservationDetails() throws Exception {
+            // Sprawdza, czy żądanie o szczegóły nieistniejącej rezerwacji zwraca status 404.
+            UUID nonExistentId = UUID.randomUUID();
+
+            mockMvc.perform(get("/reservations/" + nonExistentId)
+                            .header("Authorization", token))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andExpect(jsonPath("$.error").value("Rezerwacja nie znaleziona: " + nonExistentId));
+        }
     }
 
     @Nested
@@ -632,7 +688,7 @@ class ReservationControllerIntegrationTest extends BaseIntegrationTest {
                             .header("Authorization", adminToken))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value(404))
-                    .andExpect(jsonPath("$.error").value("Reservation not found: " + nonExistentId));
+                    .andExpect(jsonPath("$.error").value("Rezerwacja nie znaleziona: " + nonExistentId));
         }
 
         @Test
