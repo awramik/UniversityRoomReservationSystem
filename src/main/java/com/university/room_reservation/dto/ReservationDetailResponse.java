@@ -18,9 +18,10 @@ public record ReservationDetailResponse(
         ReservationStatus status
 ) {
     public static ReservationDetailResponse from(Reservation reservation, User booker) {
+        var room = reservation.getRoom();
         return new ReservationDetailResponse(
                 reservation.getId(),
-                RoomResponse.from(reservation.getRoom()),
+                room != null ? RoomResponse.from(room) : null,
                 reservation.getStartTime(),
                 reservation.getEndTime(),
                 UserProfileResponse.from(booker),
@@ -30,9 +31,10 @@ public record ReservationDetailResponse(
     }
 
     public static ReservationDetailResponse fromPublic(Reservation reservation) {
+        var room = reservation.getRoom();
         return new ReservationDetailResponse(
                 reservation.getId(),
-                RoomResponse.from(reservation.getRoom()),
+                room != null ? RoomResponse.from(room) : null,
                 reservation.getStartTime(),
                 reservation.getEndTime(),
                 null,

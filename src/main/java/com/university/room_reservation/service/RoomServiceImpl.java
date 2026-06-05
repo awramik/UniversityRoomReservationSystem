@@ -5,9 +5,11 @@ import com.university.room_reservation.dto.UpdateRoomRequest;
 import com.university.room_reservation.exception.RoomNotFoundException;
 import com.university.room_reservation.model.Room;
 import com.university.room_reservation.model.RoomType;
+import com.university.room_reservation.repository.ReservationRepository;
 import com.university.room_reservation.repository.RoomRepository;
 import com.university.room_reservation.repository.RoomSpecs;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,9 +18,11 @@ import java.util.UUID;
 public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
+    private final ReservationRepository reservationRepository;
 
-    public RoomServiceImpl(RoomRepository roomRepository) {
+    public RoomServiceImpl(RoomRepository roomRepository, ReservationRepository reservationRepository) {
         this.roomRepository = roomRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     @Override
@@ -29,8 +33,10 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @Transactional
     public void removeRoom(UUID id) {
         if (!roomRepository.existsById(id)) throw new RoomNotFoundException(id);
+        reservationRepository.cancelAndDetachByRoomId(id);
         roomRepository.deleteById(id);
     }
 

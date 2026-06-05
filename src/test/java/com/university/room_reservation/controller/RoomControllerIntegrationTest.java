@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.university.room_reservation.BaseIntegrationTest;
 import com.university.room_reservation.dto.RoomRequest;
 import com.university.room_reservation.dto.UpdateRoomRequest;
+import com.university.room_reservation.model.Reservation;
+import com.university.room_reservation.model.ReservationStatus;
+import com.university.room_reservation.model.ReservationType;
 import com.university.room_reservation.model.Room;
 import com.university.room_reservation.model.RoomType;
 import com.university.room_reservation.repository.ReservationRepository;
@@ -19,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -355,6 +359,34 @@ class RoomControllerIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isNoContent());
 
             assertThat(roomRepository.findById(roomId)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Usuwanie: Usunięcie sali anuluje powiązane rezerwacje i zachowuje je w bazie")
+        void shouldCancelAndKeepReservationsWhenDeletingRoom() throws Exception {
+            Room room = new Room("Room With Reservations", 20, RoomType.LECTURE, "Building A");
+            room = roomRepository.save(room);
+            UUID roomId = room.getId();
+
+            Reservation reservation = new Reservation(
+                    room,
+                    LocalDateTime.now().plusDays(1),
+                    LocalDateTime.now().plusDays(1).plusHours(2),
+                    STUDENT_USERNAME,
+                    ReservationType.BOOKING,
+                    "Lecture"
+            );
+            Reservation savedReservation = reservationRepository.save(reservation);
+
+            mockMvc.perform(delete("/rooms/" + roomId)
+                            .header("Authorization", adminToken))
+                    .andExpect(status().isNoContent());
+
+            assertThat(roomRepository.findById(roomId)).isEmpty();
+
+            Reservation updatedReservation = reservationRepository.findById(savedReservation.getId()).orElseThrow();
+            assertThat(updatedReservation.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
+            assertThat(updatedReservation.getRoom()).isNull();
         }
 
         @Test
