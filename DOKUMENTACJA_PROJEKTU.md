@@ -1,4 +1,5 @@
 # Dokumentacja projektu
+Autorzy: Magdalena Bernat, Wiktoria Awramik, Krzysztof Czerenko
 
 ## 1. Opis ogólny projektu
 
@@ -282,24 +283,56 @@ Za stylowanie odpowiada **Tailwind CSS 4**. W `globals.css` zdefiniowano zestaw 
 
 **`/login`** — strona logowania umożliwiająca uwierzytelnienie użytkownika za pomocą loginu i hasła. Widok jest dostępny publicznie. W przypadku aktywnej sesji użytkownik zostaje automatycznie przekierowany do panelu głównego.
 
+![Strona logowania](screenshots/login-page.png)
+*Strona logowania*
+
 **`/`** — panel główny aplikacji zawierający skróty do najważniejszych funkcjonalności systemu, takich jak zarządzanie salami, rezerwacjami oraz profilem użytkownika. Dla użytkowników posiadających rolę ADMIN dostępna jest dodatkowo sekcja administracyjna.
+
+![Ekran główny standardowego użytkownika](screenshots/main-page-user.png)
+*Ekran główny standardowego użytkownika*
+
+![Ekran główny administratora](screenshots/main-page-admin.png)
+*Ekran główny administratora*
 
 **`/rooms`** — widok prezentujący listę dostępnych sal wraz z możliwością filtrowania wyników według typu sali, budynku oraz minimalnej pojemności. Dostęp do widoku mają wszyscy uwierzytelnieni użytkownicy.
 
-**`/rooms/[id]`** — szczegółowy widok wybranej sali, umożliwiający przegląd jej parametrów, sprawdzenie dostępności w określonym terminie oraz utworzenie rezerwacji. Użytkownicy z rolą STUDENT nie mogą rezerwować sal wykładowych ani laboratoryjnych. System egzekwuje limity czasu trwania pojedynczej rezerwacji oraz maksymalnej liczby rezerwacji w tygodniu, zależne od roli użytkownika (STUDENT: maks. 2 godziny i 5 rezerwacji tygodniowo, PROWADZĄCY: maks. 4 godziny i 10 rezerwacji tygodniowo, ADMIN: bez ograniczeń). Możliwość rezerwacji tylko przyszłych terminów w slotach czasowych o określonych długościach. 
+![Widok dostępnych sal](screenshots/rooms.png)
+*Widok dostępnych sal*
+
+**`/rooms/[id]`** — szczegółowy widok wybranej sali, umożliwiający przegląd jej parametrów, sprawdzenie dostępności w określonym terminie oraz utworzenie rezerwacji. Użytkownicy z rolą STUDENT nie mogą rezerwować sal wykładowych ani laboratoryjnych. System egzekwuje limity czasu trwania pojedynczej rezerwacji oraz maksymalnej liczby rezerwacji w tygodniu, zależne od roli użytkownika (STUDENT: maks. 2 godziny i 5 rezerwacji tygodniowo, PROWADZĄCY: maks. 4 godziny i 10 rezerwacji tygodniowo, ADMIN: bez ograniczeń). Możliwość rezerwacji tylko przyszłych terminów w slotach czasowych o określonych długościach.
+
+![Widok rezerwacji wybranej sali](screenshots/new-reservation.png)
+*Widok rezerwacji wybranej sali*
 
 **`/reservations`** — widok prezentujący rezerwacje użytkownika z podziałem na aktywne, zakończone oraz anulowane. Umożliwia anulowanie aktywnych rezerwacji. Dostępny dla wszystkich zalogowanych użytkowników.
 
+![Widok swoich rezerwacji](screenshots/my-reservations.png)
+*Widok swoich rezerwacji*
+
 **`/reservations/[id]`** — szczegółowy widok pojedynczej rezerwacji zawierający informacje o terminie, sali oraz celu rezerwacji. Użytkownik standardowy ma dostęp wyłącznie do własnych rezerwacji, natomiast administrator może przeglądać wszystkie wpisy wraz z danymi osoby rezerwującej. Anulowanie jest możliwe wyłącznie dla rezerwacji o statusie aktywnym.
+
+![Widok szczegółów rezerwacji](screenshots/reservation-details.png)
+*Widok szczegółów rezerwacji*
 
 **`/users/me`** — widok profilu użytkownika umożliwiający podgląd podstawowych informacji o koncie (login, rola) oraz edycję danych osobowych, takich jak imię, nazwisko i adres e-mail.
 
+![Profil użytkownika](screenshots/my-profile.png)
+*Profil użytkownika*
+
 **`/admin/rooms`** — panel administracyjny służący do zarządzania salami. Umożliwia dodawanie, edycję oraz usuwanie sal. Dostęp do widoku posiadają wyłącznie użytkownicy z rolą ADMIN. Pozostali użytkownicy są przekierowywani do panelu głównego.
+
+![Panel administracyjny do zarządzania salami](screenshots/rooms-management.png)
+*Panel administracyjny do zarządzania salami*
 
 **`/admin/users`** — panel administracyjny prezentujący listę wszystkich kont użytkowników wraz z przypisanymi rolami. Widok umożliwia sortowanie danych według imienia lub roli, jednak nie udostępnia funkcji edycji kont. Dostęp ograniczony do roli ADMIN.
 
+![Panel administracyjny do przeglądania wszystkich użytkowników](screenshots/users-management.png)
+*Panel administracyjny do przeglądania wszystkich użytkowników*
+
 **`/admin/reservations`** — panel administracyjny umożliwiający przegląd wszystkich rezerwacji oraz blokad administracyjnych w systemie. Widok wspiera filtrowanie danych według statusu i typu wpisu, usuwanie aktywnych rezerwacji oraz tworzenie nowych blokad terminów. Dostęp wyłącznie dla użytkowników z rolą ADMIN.
 
+![Panel administracyjny do zarządzania rezerwacjami](screenshots/reservations-management.png)
+*Panel administracyjny do zarządzania rezerwacjami*
 
 ---
 
@@ -407,6 +440,16 @@ Frontend działa pod adresem **http://localhost:4000**. Podczas uruchomienia gen
 Swagger UI jest dostępny pod adresem:
 
 **http://localhost:8080/swagger-ui/index.html**
+
+---
+
+### 8. Podział pracy
+
+| Osoba | Rola |
+|-------|------|
+| Krzysztof Czerenko | backend, baza danych |
+| Magdalena Bernat | frontend |
+| Wiktoria Awramik | testy, raport Jacoco |
 
 ---
 
