@@ -75,7 +75,6 @@ export default function LoginPage() {
             </P2>
           </header>
 
-          {/* TODO: fix unexpected error message */}
           {error && (
             <div className="rounded-lg border border-error bg-errorSoft px-4 py-3 text-sm text-error">
               {error}

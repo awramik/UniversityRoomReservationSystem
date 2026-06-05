@@ -178,7 +178,6 @@ export default function ReservationDetailsPage() {
             )}
           </div>
 
-          {/* TERMIN */}
           <section className="space-y-4">
             <H2>Termin</H2>
 
@@ -205,7 +204,6 @@ export default function ReservationDetailsPage() {
             </div>
           </section>
 
-          {/* SALA */}
           {room && (
             <section className="space-y-4">
               <H2>Sala</H2>
@@ -233,7 +231,6 @@ export default function ReservationDetailsPage() {
             </section>
           )}
 
-          {/* CEL */}
           {reservation.purpose && (
             <section className="space-y-2">
               <H3>Cel rezerwacji</H3>
@@ -241,7 +238,6 @@ export default function ReservationDetailsPage() {
             </section>
           )}
 
-          {/* REZERWUJĄCY */}
           {reservation.booker && (
             <section className="space-y-2">
               <H2>Rezerwujący</H2>
