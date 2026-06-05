@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/src/app/lib/api-client";
 import { AvailabilityResponse } from "@/src/app/lib/types";
-import { toDateTime } from "../_utils/time";
+import { toApiDateTime } from "../_utils/time";
 
 export function useAvailability(
   roomId: string,
@@ -25,8 +25,8 @@ export function useAvailability(
         setChecking(true);
 
         const params = new URLSearchParams({
-          startTime: toDateTime(date, startTime).toISOString(),
-          endTime: toDateTime(date, endTime).toISOString(),
+          startTime: toApiDateTime(date, startTime),
+          endTime: toApiDateTime(date, endTime),
         });
 
         const data = await api.get<AvailabilityResponse>(

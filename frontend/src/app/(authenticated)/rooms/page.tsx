@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/src/app/auth/auth-context";
+import { canBookRoomType } from "@/src/app/lib/booking-limits";
 import { RoomType } from "@/src/app/lib/types";
 import { useRooms } from "./_hooks/useRooms";
 import { RoomCard } from "./_components/RoomCard";
@@ -30,6 +32,7 @@ function EmptyState() {
 }
 
 export default function RoomsPage() {
+  const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<RoomType | "">("");
   const [selectedBuilding, setSelectedBuilding] = useState("");
   const [minCapacity, setMinCapacity] = useState("");
@@ -38,6 +41,10 @@ export default function RoomsPage() {
     selectedType,
     selectedBuilding,
     minCapacity,
+  );
+
+  const visibleRooms = rooms.filter(
+    (r) => !user?.role || canBookRoomType(user.role, r.roomType),
   );
 
   const handleReset = (): void => {
@@ -59,6 +66,7 @@ export default function RoomsPage() {
         selectedBuilding={selectedBuilding}
         minCapacity={minCapacity}
         uniqueBuildings={uniqueBuildings}
+        userRole={user?.role}
         onTypeChange={(e) => setSelectedType(e.target.value as RoomType | "")}
         onBuildingChange={(e) => setSelectedBuilding(e.target.value)}
         onCapacityChange={(e) => setMinCapacity(e.target.value)}
@@ -75,11 +83,11 @@ export default function RoomsPage() {
       {/* CONTENT */}
       {isInitialLoading ? (
         <SkeletonGrid />
-      ) : rooms.length === 0 ? (
+      ) : visibleRooms.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {rooms.map((room) => (
+          {visibleRooms.map((room) => (
             <RoomCard key={room.id} room={room} />
           ))}
         </div>

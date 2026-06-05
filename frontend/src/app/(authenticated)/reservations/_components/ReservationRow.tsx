@@ -23,7 +23,7 @@ export function ReservationRow({ reservation, deleting, onCancel }: Props) {
     <Table.Row href={`/reservations/${reservation.id}`}>
       <Table.Cell>
         <P1 className="font-medium text-contentPrimary">
-          {reservation.roomName}
+          {reservation.roomName ?? "Sala usunięta"}
         </P1>
       </Table.Cell>
 

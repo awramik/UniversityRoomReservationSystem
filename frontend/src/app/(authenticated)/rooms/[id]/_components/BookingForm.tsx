@@ -27,6 +27,7 @@ type Props = {
   submitting: boolean;
   submitError: string;
   success: boolean;
+  maxDurationHours?: number;
 };
 
 export function BookingForm({
@@ -40,21 +41,30 @@ export function BookingForm({
   submitting,
   submitError,
   success,
+  maxDurationHours,
 }: Props) {
   const startOptions = date ? generateStartTimes(date) : [];
   const endOptions = date && startTime ? generateEndTimes(date, startTime) : [];
 
   const duration = getDurationParts(date, startTime, endTime);
+  const exceedsDuration =
+    maxDurationHours != null &&
+    duration != null &&
+    Math.floor(duration.totalMinutes / 60) > maxDurationHours;
   const noSlotsToday = date && startOptions.length === 0;
 
-  const { register, handleSubmit, watch, formState } = form;
+  const { register, handleSubmit, watch } = form;
+
+  const today = new Date().toLocaleDateString("en-CA");
 
   const dateVal = watch("date");
   const startVal = watch("startTime");
   const endVal = watch("endTime");
 
+  const isPastDate = !!dateVal && dateVal < today;
   const isFormComplete = !!dateVal && !!startVal && !!endVal;
-  const isSubmitDisabled = submitting || !isFormComplete || !formState.isValid;
+  const isSubmitDisabled =
+    submitting || !isFormComplete || isPastDate || exceedsDuration;
 
   return (
     <LightCard className="space-y-4">
@@ -62,10 +72,15 @@ export function BookingForm({
         <Fieldset>
           <Field>
             <Label>Data rezerwacji</Label>
-            <Input type="date" {...register("date")} />
+            <Input type="date" min={today} {...register("date")} />
+            {isPastDate && (
+              <P3 className="text-error mt-2">
+                Data nie może być z przeszłości
+              </P3>
+            )}
           </Field>
 
-          {date && (
+          {date && !isPastDate && (
             <>
               {noSlotsToday ? (
                 <P3 className="text-error">
@@ -123,6 +138,12 @@ export function BookingForm({
               <ClockIcon className="h-4 w-4" />
               Czas: {duration.hours > 0 && `${duration.hours}h `}
               {duration.mins > 0 && `${duration.mins}min`}
+            </P3>
+          )}
+
+          {exceedsDuration && maxDurationHours != null && (
+            <P3 className="text-error">
+              Maksymalny czas rezerwacji to {maxDurationHours} godz.
             </P3>
           )}
 

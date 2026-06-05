@@ -58,9 +58,12 @@ export function ReservationsTable({
           const status = toStatus(r.status) ? r.status : null;
 
           return (
-            <Table.Row key={r.id ?? index} href={`/reservations/${r.id}`}>
+            <Table.Row
+              key={r.id ?? index}
+              href={`/reservations/${r.id}?from=admin`}
+            >
               <Table.Cell className="font-medium text-contentPrimary">
-                {r.roomName}
+                {r.roomName ?? "Sala usunięta"}
               </Table.Cell>
 
               <Table.Cell className="text-contentSecondary">
@@ -102,7 +105,10 @@ export function ReservationsTable({
                   <Button
                     destructive
                     size="sm"
-                    onClick={() => onDelete(r.id!, r.type)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(r.id!, r.type);
+                    }}
                     disabled={deletingId === r.id}
                   >
                     {deletingId === r.id ? "Usuwanie..." : "Usuń"}

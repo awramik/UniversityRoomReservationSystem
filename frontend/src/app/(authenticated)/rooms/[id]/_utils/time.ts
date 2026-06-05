@@ -1,4 +1,5 @@
 import { addMinutes, format, isBefore, isToday, parseISO, set } from "date-fns";
+import { formatDateTimeForAPI } from "@/src/app/lib/date-utils";
 
 const WORK_START = 6;
 const WORK_END = 22;
@@ -7,6 +8,10 @@ const MIN_DURATION = 30;
 
 export function toDateTime(date: string, time: string) {
   return parseISO(`${date}T${time}:00`);
+}
+
+export function toApiDateTime(date: string, time: string) {
+  return formatDateTimeForAPI(toDateTime(date, time));
 }
 
 export function formatTime(date: Date) {
