@@ -102,7 +102,10 @@ export function ReservationsTable({
                   <Button
                     destructive
                     size="sm"
-                    onClick={() => onDelete(r.id!, r.type)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(r.id!, r.type);
+                    }}
                     disabled={deletingId === r.id}
                   >
                     {deletingId === r.id ? "Usuwanie..." : "Usuń"}
