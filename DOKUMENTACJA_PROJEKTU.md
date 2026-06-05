@@ -341,53 +341,60 @@ Za stylowanie odpowiada **Tailwind CSS 4**. W `globals.css` zdefiniowano zestaw 
 ## 6. Testy
 
 ### 6.1. Zakres testów
+Zautomatyzowany zestaw testów został zaprojektowany w celu zapewnienia stabilności i bezpieczeństwa systemu rezerwacji sal uniwersyteckich. Pokrywa on pełną ścieżkę krytyczną aplikacji — od niskopoziomowych reguł biznesowych po integrację z bazą danych i mechanizmami autoryzacji HTTP.
 
-Najbardziej rozwinięta warstwa testowa dotyczy backendu. Projekt zawiera:
+Kluczowe metryki charakteryzujące zestaw testów po rozbudowie:
+* **Liczba zautomatyzowanych testów**: **116** (łączna suma testów jednostkowych i integracyjnych).
+* **Wskaźnik powodzenia (Pass Rate)**: **100%** (0 błędów, 0 awarii).
+* **Czas wykonania pakietu (Execution Time)**: Około **56 sekund** dla pełnego cyklu (włączając podnoszenie kontenera bazy danych w Dockerze).
 
-- **testy jednostkowe** serwisów z użyciem Mockito,
-- **testy integracyjne** kontrolerów i logiki systemowej,
-- testy bezpieczeństwa i ograniczeń dostępu,
-- testy walidacji danych wejściowych,
-- testy kolizji rezerwacji i blokad administracyjnych.
+[Wyniki testów](./Test%20Results%20-%20java_in_university-room-reservation-system.html)
+
+---
 
 ### 6.2. Testy jednostkowe
+Testy jednostkowe koncentrują się na izolowanym weryfikowaniu logiki biznesowej zawartej w warstwie usług (`Services`). Do ich realizacji wykorzystano technologie **JUnit 5** oraz **Mockito**, co pozwala na pełne mockowanie zależności bazodanowych i konfiguracyjnych.
 
-Testy jednostkowe wykorzystują:
+Zastosowane dobre praktyki i architektura testów jednostkowych:
+* **Struktura klas `@Nested`**: Testy zostały pogrupowane tematycznie według zachowań biznesowych za pomocą niestatycznych klas wewnętrznych z adnotacją `@Nested` (np. bloki `TworzenieRezerwacji`, `AnulowanieRezerwacji`, `SprawdzanieDostepnosciSal`). Zwiększa to czytelność kodu testowego i ułatwia lokalizację scenariuszy.
+* **Język Wszechobecny (Ubiquitous Language)**: Nazwy metod technicznych są pisane w języku angielskim, natomiast opisy w adnotacjach **`@DisplayName`** zostały sporządzone w **języku polskim**. Podejście to bezpośrednio odzwierciedla zasady **Domain-Driven Design (DDD)**.
+* **Scenariusze negatywne**: Szczególny nacisk położono na weryfikację zachowań w sytuacjach błędnych (np. próba rezerwacji sali w przeszłości, nakładanie się rezerwacji, przekroczenie limitów czasu rezerwacji).
 
-- **JUnit 5**,
-- **Mockito**,
-- klasy zagnieżdżone `@Nested`,
-- opisy scenariuszy przez `@DisplayName`.
-
-Pozwala to testować pojedyncze reguły biznesowe bez uruchamiania całego kontekstu aplikacji.
+---
 
 ### 6.3. Testy integracyjne
+Testy integracyjne weryfikują pełne komponenty Spring Boot (warstwę kontrolerów i repozytoriów) oraz ich interakcję z bazą danych i mechanizmami Spring Security. Wykorzystują one **Spring Boot Test**, bibliotekę **MockMvc** do symulowania żądań HTTP oraz środowisko **Testcontainers**.
 
-Testy integracyjne korzystają z:
+Kluczowe aspekty techniczne testów integracyjnych:
+* **Prawdziwa baza danych (MySQL 8.0)**: W przeciwieństwie do uproszczonych baz in-memory (np. H2), testy integracyjne uruchamiane są na rzeczywistej bazie danych MySQL 8.0 działającej wewnątrz tymczasowego kontenera Docker. Zapobiega to ukrywaniu błędów specyficznych dla produkcyjnego dialektu SQL oraz mechanizmu blokowania transakcji.
+>**Optymalizacja wzorcem Singleton**:
+> Podnoszenie osobnego kontenera dla każdej klasy testowej wiązałoby się z dużym narzutem czasowym. Klasa bazowa **`BaseIntegrationTest`** implementuje wzorzec Singleton — statyczna instancja kontenera MySQL jest inicjalizowana w statycznym bloku i współdzielona przez wszystkie klasy testów integracyjnych dziedziczące po niej. Dzięki temu baza danych podnosi się **dokładnie raz** na całą sesję JVM.
 
-- **Spring Boot Test**,
-- **MockMvc** do wykonywania żądań HTTP,
-- **Testcontainers** do uruchamiania bazy MySQL w kontenerze,
-- wspólnej klasy bazowej `BaseIntegrationTest`.
-
-Takie podejście pozwala weryfikować aplikację w warunkach zbliżonych do rzeczywistego środowiska działania.
+---
 
 ### 6.4. Co jest sprawdzane
+Poza podstawowymi operacjami CRUD, zestaw testów weryfikuje zaawansowane scenariusze architektoniczne i biznesowe:
 
-Zestaw testów obejmuje m.in.:
+* **Obrona przed współbieżnością (Race Conditions)**:
+    * Przetestowano scenariusz, w którym pula 10 wątków (symulująca 10 studentów korzystających z klasy `ExecutorService` i zsynchronizowanych obiektem `CountDownLatch`) próbuje zarezerwować dokładnie tę samą salę na ten sam przedział czasu.
+    * System chroni spójność danych poprzez **blokowanie pesymistyczne zapisu (`PESSIMISTIC_WRITE`)** na poziomie repozytorium (`findWithLockById` w encji `Room`).
+    * Test weryfikuje, że dokładnie **jedna** rezerwacja kończy się sukcesem, a pozostałe **9** żądań zostaje bezpiecznie odrzuconych z wyjątkiem `ReservationConflictException` (zwracającym status HTTP 409).
+* **Ochrona prywatności danych osobowych (RODO/GDPR)**:
+    * System musi zapobiegać ujawnianiu danych osób rezerwujących salę nieuprawnionym użytkownikom.
+    * Testy integracyjne weryfikują automatyczne **maskowanie pola `bookerName`** (nazwy użytkownika dokonującego rezerwacji) w odpowiedziach JSON na zapytania `/reservations` i `/reservations/{id}`, jeżeli żądanie pochodzi od roli `STUDENT` lub `LECTURER`.
+    * Pełne dane osobowe rezerwujących są udostępniane wyłącznie dla roli `ADMIN`.
 
-- poprawne logowanie,
-- dostęp do endpointów zależnie od roli,
-- maskowanie danych rezerwującego dla nieuprzywilejowanych użytkowników,
-- poprawność walidacji DTO,
-- obsługę błędów i odpowiednie kody HTTP,
-- reguły biznesowe dotyczące limitów rezerwacji,
-- blokady administracyjne,
-- poprawność filtrowania i pobierania danych.
+---
 
 ### 6.5. Pokrycie kodu
+Pokrycie kodu jest automatycznie monitorowane i mierzone przez bibliotekę **JaCoCo (Java Code Coverage)** podczas każdego uruchomienia komendy testowej.
 
-W projekcie skonfigurowano **JaCoCo**, które generuje raport pokrycia po uruchomieniu testów. Jest to przydatne narzędzie do oceny jakości warstwy backendowej i stopnia zabezpieczenia logiki biznesowej testami.
+Zasady i granice pokrycia kodu w projekcie:
+* **Klasy operacyjne**: Logika biznesowa w serwisach oraz obsługa endpointów w kontrolerach posiadają pokrycie linii i gałęzi decyzyjnych (branch coverage) na poziomie bliskim **100%**.
+* **Wyłączenia z reguł pokrycia**: Klasy czysto szablonowe (boilerplate), takie jak encje JPA (modele domenowe), rekordy DTO (struktury przesyłu danych), własne klasy wyjątków (np. `RoomNotFoundException`) oraz pliki konfiguracyjne Springa zostały celowo wyłączone z restrykcyjnych reguł JaCoCo. Klasy te nie zawierają własnej logiki biznesowej, a ich testowanie jednostkowe generowałoby fałszywy wskaźnik pokrycia bez rzeczywistego wpływu na bezpieczeństwo kodu.
+
+![Podsumowanie Jacoco](screenshots/raport-jacoco.png)
+*Podsumowanie JaCoCo*
 
 ---
 
